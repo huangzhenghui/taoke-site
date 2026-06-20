@@ -1,7 +1,9 @@
 import { ArticleCard } from "@/components/article/ArticleCard";
 import { ProductCard } from "@/components/product/ProductCard";
+import { SeoPageCard } from "@/components/seo/SeoPageCard";
 import { mockArticles } from "@/modules/article";
 import { mockProducts } from "@/modules/product";
+import { mockSeoPages } from "@/modules/seo-page";
 
 export default function Home() {
   return (
@@ -19,7 +21,8 @@ export default function Home() {
               </p>
             </div>
             <div className="rounded-md border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600">
-              {mockArticles.length} 篇文章 / {mockProducts.length} 个商品
+              {mockSeoPages.length} 个专题 / {mockArticles.length} 篇文章 /{" "}
+              {mockProducts.length} 个商品
             </div>
           </div>
         </header>
@@ -37,6 +40,23 @@ export default function Home() {
           >
             {mockArticles.map((article) => (
               <ArticleCard article={article} key={article.id} />
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-zinc-950">精选专题</h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              按场景和关键词组织专题页，适合后续承接百度长尾搜索流量。
+            </p>
+          </div>
+          <div
+            aria-label="精选专题列表"
+            className="grid grid-cols-1 gap-5 md:grid-cols-2"
+          >
+            {mockSeoPages.map((seoPage) => (
+              <SeoPageCard key={seoPage.id} seoPage={seoPage} />
             ))}
           </div>
         </section>
