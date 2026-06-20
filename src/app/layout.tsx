@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { siteConfig } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "好物精选",
-  description: "专注实用好物与优惠导购的内容站。",
+  title: siteConfig.siteName,
+  description: `${siteConfig.siteDescription}的内容站。`,
 };
 
 export default function RootLayout({

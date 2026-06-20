@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { siteConfig } from "@/lib/site";
 import { mockProducts } from "@/modules/product";
 
 const categoryLinks = Array.from(
@@ -20,9 +21,11 @@ export function SiteHeader() {
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-5 py-4 sm:px-8 lg:px-12">
         <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
           <Link className="text-xl font-semibold text-zinc-950" href="/">
-            好物精选
+            {siteConfig.siteName}
           </Link>
-          <p className="text-sm text-zinc-500">专注实用好物与优惠导购</p>
+          <p className="text-sm text-zinc-500">
+            {siteConfig.siteDescription}
+          </p>
         </div>
 
         <nav aria-label="站点导航" className="flex flex-wrap items-center gap-2 text-sm">
