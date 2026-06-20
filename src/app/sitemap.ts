@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { getSiteUrl } from "@/lib/site";
+import { mockArticles } from "@/modules/article";
 import { mockProducts } from "@/modules/product";
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -21,6 +22,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(product.updatedAt),
       priority: 0.8,
       url: getSiteUrl(`/item/${product.id}`),
+    })),
+    ...mockArticles.map((article) => ({
+      changeFrequency: "weekly" as const,
+      lastModified: new Date(article.updatedAt),
+      priority: 0.8,
+      url: getSiteUrl(`/article/${article.slug}`),
     })),
     ...categorySlugs.map((slug) => ({
       changeFrequency: "daily" as const,
