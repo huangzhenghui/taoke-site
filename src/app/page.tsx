@@ -1,4 +1,6 @@
+import { ArticleCard } from "@/components/article/ArticleCard";
 import { ProductCard } from "@/components/product/ProductCard";
+import { mockArticles } from "@/modules/article";
 import { mockProducts } from "@/modules/product";
 
 export default function Home() {
@@ -10,25 +12,50 @@ export default function Home() {
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div className="max-w-3xl space-y-3">
               <h1 className="text-3xl font-semibold tracking-normal text-zinc-950 sm:text-4xl">
-                今日值得关注的优惠商品
+                今日值得关注的导购内容
               </h1>
               <p className="text-base leading-7 text-zinc-600">
-                当前页面读取本地 mock 商品数据，用于验证商品展示结构和导购内容站首页骨架。
+                当前页面读取本地 mock 文章和商品数据，用于验证导购内容站首页骨架。
               </p>
             </div>
             <div className="rounded-md border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600">
-              共 {mockProducts.length} 个商品
+              {mockArticles.length} 篇文章 / {mockProducts.length} 个商品
             </div>
           </div>
         </header>
 
-        <section
-          aria-label="商品列表"
-          className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
-        >
-          {mockProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-zinc-950">导购文章</h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              围绕选购指南、场景清单和实用好物整理内容，后续可作为百度 SEO 承接入口。
+            </p>
+          </div>
+          <div
+            aria-label="导购文章列表"
+            className="grid grid-cols-1 gap-5 md:grid-cols-2"
+          >
+            {mockArticles.map((article) => (
+              <ArticleCard article={article} key={article.id} />
+            ))}
+          </div>
+        </section>
+
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-zinc-950">优惠商品</h2>
+            <p className="mt-2 text-sm leading-6 text-zinc-600">
+              展示当前 mock 商品池中的优惠信息，后续可接入后台配置和淘客接口数据。
+            </p>
+          </div>
+          <div
+            aria-label="商品列表"
+            className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
+          >
+            {mockProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
         </section>
       </div>
     </main>
