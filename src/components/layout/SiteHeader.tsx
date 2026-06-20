@@ -1,19 +1,16 @@
 import Link from "next/link";
 
 import { siteConfig } from "@/lib/site";
-import { mockProducts } from "@/modules/product";
+import { mockCategories } from "@/modules/category";
 
-const categoryLinks = Array.from(
-  new Map(
-    mockProducts.map((product) => [
-      product.categoryId,
-      {
-        href: `/category/${product.categoryId}`,
-        name: product.categoryName,
-      },
-    ]),
-  ).values(),
-).slice(0, 4);
+const categoryLinks = mockCategories
+  .filter((category) => category.status === "active")
+  .sort((a, b) => a.sortOrder - b.sortOrder)
+  .slice(0, 4)
+  .map((category) => ({
+    href: `/category/${category.slug}`,
+    name: category.name,
+  }));
 
 export function SiteHeader() {
   return (

@@ -2,13 +2,14 @@ import type { MetadataRoute } from "next";
 
 import { getSiteUrl } from "@/lib/site";
 import { mockArticles } from "@/modules/article";
+import { mockCategories } from "@/modules/category";
 import { mockProducts } from "@/modules/product";
 import { mockSeoPages } from "@/modules/seo-page";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
-  const categorySlugs = Array.from(
-    new Set(mockProducts.map((product) => product.categoryId)),
+  const activeCategories = mockCategories.filter(
+    (category) => category.status === "active",
   );
 
   return [
@@ -36,11 +37,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
       url: getSiteUrl(`/topic/${seoPage.slug}`),
     })),
-    ...categorySlugs.map((slug) => ({
+    ...activeCategories.map((category) => ({
       changeFrequency: "daily" as const,
-      lastModified: now,
+      lastModified: new Date(category.updatedAt),
       priority: 0.7,
-      url: getSiteUrl(`/category/${slug}`),
+      url: getSiteUrl(`/category/${category.slug}`),
     })),
   ];
 }

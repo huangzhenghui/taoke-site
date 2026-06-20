@@ -19,6 +19,7 @@ export type Product = {
   commissionRate: number;
   shopName: string;
   categoryId: string;
+  categorySlug: string;
   categoryName: string;
   promotionUrl: string;
   couponUrl: string;

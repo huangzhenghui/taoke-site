@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { ProductCard } from "@/components/product/ProductCard";
+import { mockCategories } from "@/modules/category";
 import { mockProducts } from "@/modules/product";
 
 type CategoryPageProps = {
@@ -11,40 +13,48 @@ type CategoryPageProps = {
 };
 
 function getProductsByCategorySlug(slug: string) {
-  return mockProducts.filter((product) => product.categoryId === slug);
+  return mockProducts.filter((product) => product.categorySlug === slug);
 }
 
-function getCategoryName(slug: string) {
-  return (
-    mockProducts.find((product) => product.categoryId === slug)?.categoryName ??
-    "未知分类"
-  );
+function findCategoryBySlug(slug: string) {
+  return mockCategories.find((category) => category.slug === slug);
 }
 
 export async function generateStaticParams() {
-  return Array.from(
-    new Set(mockProducts.map((product) => product.categoryId)),
-  ).map((slug) => ({
-    slug,
-  }));
+  return mockCategories
+    .filter((category) => category.status === "active")
+    .map((category) => ({
+      slug: category.slug,
+    }));
 }
 
 export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const categoryName = getCategoryName(slug);
+  const category = findCategoryBySlug(slug);
+
+  if (!category) {
+    return {
+      title: "分类不存在",
+    };
+  }
 
   return {
-    description: `展示${categoryName}下值得关注的优惠商品和导购信息。`,
-    title: `${categoryName}好物推荐`,
+    description: category.seoDescription,
+    title: category.seoTitle,
   };
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
+  const category = findCategoryBySlug(slug);
+
+  if (!category) {
+    notFound();
+  }
+
   const products = getProductsByCategorySlug(slug);
-  const categoryName = getCategoryName(slug);
 
   return (
     <main className="min-h-screen bg-zinc-50 px-5 py-8 text-zinc-950 sm:px-8 lg:px-12">
@@ -58,11 +68,15 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
             <div className="max-w-3xl space-y-3">
               <h1 className="text-3xl font-semibold tracking-normal text-zinc-950 sm:text-4xl">
-                {categoryName}好物推荐
+                {category.name}好物推荐
               </h1>
               <p className="text-base leading-7 text-zinc-600">
-                汇总当前分类下值得关注的优惠商品，后续可承接分类关键词、选购指南和活动导购内容。
+                {category.description}
               </p>
+              <div className="rounded-lg border border-zinc-200 bg-white p-4 text-sm leading-6 text-zinc-600">
+                <p className="font-medium text-zinc-950">{category.seoTitle}</p>
+                <p className="mt-2">{category.seoDescription}</p>
+              </div>
             </div>
             <div className="rounded-md border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600">
               共 {products.length} 个商品
@@ -72,7 +86,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
         {products.length > 0 ? (
           <section
-            aria-label={`${categoryName}商品列表`}
+            aria-label={`${category.name}商品列表`}
             className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3"
           >
             {products.map((product) => (

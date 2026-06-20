@@ -34,7 +34,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-center justify-between gap-3 text-xs">
           <Link
             className="rounded-md bg-emerald-50 px-2 py-1 font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
-            href={`/category/${product.categoryId}`}
+            href={`/category/${product.categorySlug}`}
           >
             {product.categoryName}
           </Link>
