@@ -1,11 +1,9 @@
 import Link from "next/link";
 
 import { siteConfig } from "@/lib/site";
-import { mockCategories } from "@/modules/category";
+import { getActiveCategories } from "@/modules/category";
 
-const categoryLinks = mockCategories
-  .filter((category) => category.status === "active")
-  .sort((a, b) => a.sortOrder - b.sortOrder)
+const categoryLinks = getActiveCategories()
   .slice(0, 4)
   .map((category) => ({
     href: `/category/${category.slug}`,

@@ -6,7 +6,7 @@ import { ArticleCard } from "@/components/article/ArticleCard";
 import { ProductCard } from "@/components/product/ProductCard";
 import { getArticlesByIds } from "@/modules/article";
 import { getProductsByIds } from "@/modules/product";
-import { mockSeoPages } from "@/modules/seo-page";
+import { getAllSeoPages, getSeoPageBySlug } from "@/modules/seo-page";
 
 type TopicPageProps = {
   params: Promise<{
@@ -14,12 +14,8 @@ type TopicPageProps = {
   }>;
 };
 
-function findTopicBySlug(slug: string) {
-  return mockSeoPages.find((topic) => topic.slug === slug);
-}
-
 export async function generateStaticParams() {
-  return mockSeoPages.map((topic) => ({
+  return getAllSeoPages().map((topic) => ({
     slug: topic.slug,
   }));
 }
@@ -28,7 +24,7 @@ export async function generateMetadata({
   params,
 }: TopicPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const topic = findTopicBySlug(slug);
+  const topic = getSeoPageBySlug(slug);
 
   if (!topic) {
     return {
@@ -44,7 +40,7 @@ export async function generateMetadata({
 
 export default async function TopicDetailPage({ params }: TopicPageProps) {
   const { slug } = await params;
-  const topic = findTopicBySlug(slug);
+  const topic = getSeoPageBySlug(slug);
 
   if (!topic) {
     notFound();

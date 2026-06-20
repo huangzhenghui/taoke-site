@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ProductCard } from "@/components/product/ProductCard";
-import { mockCategories } from "@/modules/category";
+import { getActiveCategories, getCategoryBySlug } from "@/modules/category";
 import { getProductsByCategorySlug } from "@/modules/product";
 
 type CategoryPageProps = {
@@ -12,23 +12,17 @@ type CategoryPageProps = {
   }>;
 };
 
-function findCategoryBySlug(slug: string) {
-  return mockCategories.find((category) => category.slug === slug);
-}
-
 export async function generateStaticParams() {
-  return mockCategories
-    .filter((category) => category.status === "active")
-    .map((category) => ({
-      slug: category.slug,
-    }));
+  return getActiveCategories().map((category) => ({
+    slug: category.slug,
+  }));
 }
 
 export async function generateMetadata({
   params,
 }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const category = findCategoryBySlug(slug);
+  const category = getCategoryBySlug(slug);
 
   if (!category) {
     return {
@@ -44,7 +38,7 @@ export async function generateMetadata({
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params;
-  const category = findCategoryBySlug(slug);
+  const category = getCategoryBySlug(slug);
 
   if (!category) {
     notFound();
