@@ -3,6 +3,7 @@ import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/site";
 import { mockArticles } from "@/modules/article";
 import { mockProducts } from "@/modules/product";
+import { mockSeoPages } from "@/modules/seo-page";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
@@ -28,6 +29,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(article.updatedAt),
       priority: 0.8,
       url: getSiteUrl(`/article/${article.slug}`),
+    })),
+    ...mockSeoPages.map((seoPage) => ({
+      changeFrequency: "weekly" as const,
+      lastModified: new Date(seoPage.updatedAt),
+      priority: 0.8,
+      url: getSiteUrl(`/topic/${seoPage.slug}`),
     })),
     ...categorySlugs.map((slug) => ({
       changeFrequency: "daily" as const,
