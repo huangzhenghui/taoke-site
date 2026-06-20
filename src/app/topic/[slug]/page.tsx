@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { ArticleCard } from "@/components/article/ArticleCard";
 import { ProductCard } from "@/components/product/ProductCard";
 import { mockArticles } from "@/modules/article";
-import { mockProducts } from "@/modules/product";
+import { getProductsByIds } from "@/modules/product";
 import { mockSeoPages } from "@/modules/seo-page";
 
 type TopicPageProps = {
@@ -16,12 +16,6 @@ type TopicPageProps = {
 
 function findTopicBySlug(slug: string) {
   return mockSeoPages.find((topic) => topic.slug === slug);
-}
-
-function getRelatedProducts(productIds: string[]) {
-  const idSet = new Set(productIds);
-
-  return mockProducts.filter((product) => idSet.has(product.id));
 }
 
 function getRelatedArticles(articleIds: string[]) {
@@ -62,7 +56,7 @@ export default async function TopicDetailPage({ params }: TopicPageProps) {
     notFound();
   }
 
-  const relatedProducts = getRelatedProducts(topic.relatedProductIds);
+  const relatedProducts = getProductsByIds(topic.relatedProductIds);
   const relatedArticles = getRelatedArticles(topic.relatedArticleIds);
 
   return (

@@ -4,17 +4,13 @@ import { notFound } from "next/navigation";
 
 import { ProductCard } from "@/components/product/ProductCard";
 import { mockCategories } from "@/modules/category";
-import { mockProducts } from "@/modules/product";
+import { getProductsByCategorySlug } from "@/modules/product";
 
 type CategoryPageProps = {
   params: Promise<{
     slug: string;
   }>;
 };
-
-function getProductsByCategorySlug(slug: string) {
-  return mockProducts.filter((product) => product.categorySlug === slug);
-}
 
 function findCategoryBySlug(slug: string) {
   return mockCategories.find((category) => category.slug === slug);

@@ -3,11 +3,12 @@ import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/site";
 import { mockArticles } from "@/modules/article";
 import { mockCategories } from "@/modules/category";
-import { mockProducts } from "@/modules/product";
+import { getAllProducts } from "@/modules/product";
 import { mockSeoPages } from "@/modules/seo-page";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
+  const products = getAllProducts();
   const activeCategories = mockCategories.filter(
     (category) => category.status === "active",
   );
@@ -19,7 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
       url: getSiteUrl("/"),
     },
-    ...mockProducts.map((product) => ({
+    ...products.map((product) => ({
       changeFrequency: "weekly" as const,
       lastModified: new Date(product.updatedAt),
       priority: 0.8,

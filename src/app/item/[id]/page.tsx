@@ -2,7 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { mockProducts, type Product, type ProductStatus } from "@/modules/product";
+import {
+  getAllProducts,
+  getProductById,
+  type Product,
+  type ProductStatus,
+} from "@/modules/product";
 
 const currencyFormatter = new Intl.NumberFormat("zh-CN", {
   currency: "CNY",
@@ -39,12 +44,8 @@ type ProductPageProps = {
   }>;
 };
 
-function findProductById(id: string) {
-  return mockProducts.find((product) => product.id === id);
-}
-
 export async function generateStaticParams() {
-  return mockProducts.map((product) => ({
+  return getAllProducts().map((product) => ({
     id: product.id,
   }));
 }
@@ -53,7 +54,7 @@ export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { id } = await params;
-  const product = findProductById(id);
+  const product = getProductById(id);
 
   if (!product) {
     return {
@@ -69,7 +70,7 @@ export async function generateMetadata({
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { id } = await params;
-  const product = findProductById(id);
+  const product = getProductById(id);
 
   if (!product) {
     notFound();

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { ProductCard } from "@/components/product/ProductCard";
 import { mockArticles } from "@/modules/article";
-import { mockProducts } from "@/modules/product";
+import { getProductsByIds } from "@/modules/product";
 
 type ArticlePageProps = {
   params: Promise<{
@@ -20,12 +20,6 @@ const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
 
 function findArticleBySlug(slug: string) {
   return mockArticles.find((article) => article.slug === slug);
-}
-
-function getRelatedProducts(productIds: string[]) {
-  const idSet = new Set(productIds);
-
-  return mockProducts.filter((product) => idSet.has(product.id));
 }
 
 export async function generateStaticParams() {
@@ -60,7 +54,7 @@ export default async function ArticleDetailPage({ params }: ArticlePageProps) {
     notFound();
   }
 
-  const relatedProducts = getRelatedProducts(article.relatedProductIds);
+  const relatedProducts = getProductsByIds(article.relatedProductIds);
 
   return (
     <main className="min-h-screen bg-zinc-50 px-5 py-8 text-zinc-950 sm:px-8 lg:px-12">
