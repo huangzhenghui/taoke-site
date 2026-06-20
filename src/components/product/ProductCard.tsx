@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import type { Product, ProductStatus } from "@/modules/product";
 
 const currencyFormatter = new Intl.NumberFormat("zh-CN", {
@@ -68,12 +70,12 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           </div>
 
-          <button
-            className="h-10 w-full rounded-md bg-zinc-950 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-            type="button"
+          <Link
+            className="flex h-10 w-full items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+            href={`/item/${product.id}`}
           >
             查看详情
-          </button>
+          </Link>
         </div>
       </div>
     </article>
