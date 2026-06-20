@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ProductCard } from "@/components/product/ProductCard";
-import { mockArticles } from "@/modules/article";
+import { getAllArticles, getArticleBySlug } from "@/modules/article";
 import { getProductsByIds } from "@/modules/product";
 
 type ArticlePageProps = {
@@ -18,12 +18,8 @@ const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   year: "numeric",
 });
 
-function findArticleBySlug(slug: string) {
-  return mockArticles.find((article) => article.slug === slug);
-}
-
 export async function generateStaticParams() {
-  return mockArticles.map((article) => ({
+  return getAllArticles().map((article) => ({
     slug: article.slug,
   }));
 }
@@ -32,7 +28,7 @@ export async function generateMetadata({
   params,
 }: ArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
-  const article = findArticleBySlug(slug);
+  const article = getArticleBySlug(slug);
 
   if (!article) {
     return {
@@ -48,7 +44,7 @@ export async function generateMetadata({
 
 export default async function ArticleDetailPage({ params }: ArticlePageProps) {
   const { slug } = await params;
-  const article = findArticleBySlug(slug);
+  const article = getArticleBySlug(slug);
 
   if (!article) {
     notFound();

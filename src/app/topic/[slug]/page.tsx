@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { ArticleCard } from "@/components/article/ArticleCard";
 import { ProductCard } from "@/components/product/ProductCard";
-import { mockArticles } from "@/modules/article";
+import { getArticlesByIds } from "@/modules/article";
 import { getProductsByIds } from "@/modules/product";
 import { mockSeoPages } from "@/modules/seo-page";
 
@@ -16,12 +16,6 @@ type TopicPageProps = {
 
 function findTopicBySlug(slug: string) {
   return mockSeoPages.find((topic) => topic.slug === slug);
-}
-
-function getRelatedArticles(articleIds: string[]) {
-  const idSet = new Set(articleIds);
-
-  return mockArticles.filter((article) => idSet.has(article.id));
 }
 
 export async function generateStaticParams() {
@@ -57,7 +51,7 @@ export default async function TopicDetailPage({ params }: TopicPageProps) {
   }
 
   const relatedProducts = getProductsByIds(topic.relatedProductIds);
-  const relatedArticles = getRelatedArticles(topic.relatedArticleIds);
+  const relatedArticles = getArticlesByIds(topic.relatedArticleIds);
 
   return (
     <main className="min-h-screen bg-zinc-50 px-5 py-8 text-zinc-950 sm:px-8 lg:px-12">

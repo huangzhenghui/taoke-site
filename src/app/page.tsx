@@ -1,11 +1,12 @@
 import { ArticleCard } from "@/components/article/ArticleCard";
 import { ProductCard } from "@/components/product/ProductCard";
 import { SeoPageCard } from "@/components/seo/SeoPageCard";
-import { mockArticles } from "@/modules/article";
+import { getAllArticles } from "@/modules/article";
 import { getAllProducts } from "@/modules/product";
 import { mockSeoPages } from "@/modules/seo-page";
 
 export default function Home() {
+  const articles = getAllArticles();
   const products = getAllProducts();
 
   return (
@@ -23,7 +24,7 @@ export default function Home() {
               </p>
             </div>
             <div className="rounded-md border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600">
-              {mockSeoPages.length} 个专题 / {mockArticles.length} 篇文章 /{" "}
+              {mockSeoPages.length} 个专题 / {articles.length} 篇文章 /{" "}
               {products.length} 个商品
             </div>
           </div>
@@ -40,7 +41,7 @@ export default function Home() {
             aria-label="导购文章列表"
             className="grid grid-cols-1 gap-5 md:grid-cols-2"
           >
-            {mockArticles.map((article) => (
+            {articles.map((article) => (
               <ArticleCard article={article} key={article.id} />
             ))}
           </div>
