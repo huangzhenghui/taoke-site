@@ -32,9 +32,12 @@ export function ProductCard({ product }: ProductCardProps) {
 
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="flex items-center justify-between gap-3 text-xs">
-          <span className="rounded-md bg-emerald-50 px-2 py-1 font-medium text-emerald-700">
+          <Link
+            className="rounded-md bg-emerald-50 px-2 py-1 font-medium text-emerald-700 transition-colors hover:bg-emerald-100"
+            href={`/category/${product.categoryId}`}
+          >
             {product.categoryName}
-          </span>
+          </Link>
           <span className="rounded-md bg-zinc-100 px-2 py-1 font-medium text-zinc-600">
             {statusLabels[product.status]}
           </span>
