@@ -5,6 +5,7 @@ import {
   DataokeClientError,
   dataokeConfig,
   dataokeEndpoints,
+  mapDataokePrivilegeLinkToPromotionLink,
   mapDataokeProductToProduct,
   mapDataokeSuperCategoryToCategory,
 } from "@/integrations/dataoke";
@@ -12,13 +13,15 @@ import type {
   DataokeApiBaseResponse,
   DataokeCategoryResponse,
   DataokeInnerResponse,
+  DataokePrivilegeLinkResult,
+  DataokeRawProduct,
   DataokeSafeErrorSummary,
   DataokeSafeRequestSummary,
-  DataokeSearchGoodsResult,
   DataokeSuperCategory,
 } from "@/integrations/dataoke";
 import type { Category } from "@/modules/category";
 import type { Product } from "@/modules/product";
+import type { PromotionLink } from "@/modules/promotion-link";
 
 type DataokeRawSummary = {
   status?: number;
@@ -28,6 +31,21 @@ type DataokeRawSummary = {
   totalNum?: number;
   pageId?: string;
   listCount?: number;
+  couponEndTime?: string;
+  couponStartTime?: string;
+  hasActualPrice?: boolean;
+  hasCouponClickUrl?: boolean;
+  hasItemUrl?: boolean;
+  hasMaxCommissionRate?: boolean;
+  hasOriginalPrice?: boolean;
+  hasShortUrl?: boolean;
+  hasTpwd?: boolean;
+  itemId?: string | number;
+  dataKeys?: string[];
+  detectedListPath?: string;
+  firstItemKeys?: string[];
+  innerDataKeys?: string[];
+  topLevelKeys?: string[];
 };
 
 type DataokeMappedProductSummary = Pick<
@@ -48,6 +66,25 @@ type DataokeMappedCategorySummary = Pick<
   "id" | "name" | "seoTitle" | "slug" | "sortOrder" | "status"
 >;
 
+type DataokeMappedPromotionLinkSummary = Pick<
+  PromotionLink,
+  | "couponUrl"
+  | "outerItemId"
+  | "platform"
+  | "productId"
+  | "promotionUrl"
+  | "source"
+  | "status"
+  | "tpwd"
+>;
+
+type ExtractedDataokeSearchResult = {
+  detectedPath: string;
+  list: DataokeRawProduct[];
+  pageId?: string;
+  totalNum?: number;
+};
+
 export type DataokeTestActionState = {
   success: boolean;
   message: string;
@@ -55,6 +92,7 @@ export type DataokeTestActionState = {
   safeErrorSummary: DataokeSafeErrorSummary | null;
   safeRequestSummary: DataokeSafeRequestSummary | null;
   mappedCategories: DataokeMappedCategorySummary[];
+  mappedPromotionLink: DataokeMappedPromotionLinkSummary | null;
   mappedProducts: DataokeMappedProductSummary[];
 };
 
@@ -118,6 +156,7 @@ function toErrorState(error: unknown): DataokeTestActionState {
 
     return {
       mappedCategories: [],
+      mappedPromotionLink: null,
       mappedProducts: [],
       message: error.message,
       rawSummary: null,
@@ -129,6 +168,7 @@ function toErrorState(error: unknown): DataokeTestActionState {
 
   return {
     mappedCategories: [],
+    mappedPromotionLink: null,
     mappedProducts: [],
     message: "Dataoke test action failed.",
     rawSummary: null,
@@ -138,29 +178,137 @@ function toErrorState(error: unknown): DataokeTestActionState {
   };
 }
 
-function getSearchResult(
-  response: DataokeApiBaseResponse<
-    DataokeInnerResponse<DataokeSearchGoodsResult>
-  >,
-) {
-  return response.data?.data;
+function getRecordKeys(value: unknown) {
+  return isRecord(value) ? Object.keys(value).sort() : undefined;
 }
 
-function getRawSummary(
-  response: DataokeApiBaseResponse<
-    DataokeInnerResponse<DataokeSearchGoodsResult>
-  >,
-): DataokeRawSummary {
-  const result = getSearchResult(response);
+function getPathValue(value: unknown, path: string[]) {
+  return path.reduce<unknown>((currentValue, key) => {
+    if (!isRecord(currentValue)) {
+      return undefined;
+    }
+
+    return currentValue[key];
+  }, value);
+}
+
+function getStringFieldValue(record: Record<string, unknown>, key: string) {
+  const value = record[key];
+
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+
+  return String(value);
+}
+
+function getNumberFieldValue(record: Record<string, unknown>, key: string) {
+  const value = Number(record[key]);
+
+  return Number.isFinite(value) ? value : undefined;
+}
+
+function getFirstStringAtPaths(raw: unknown, paths: string[][]) {
+  for (const path of paths) {
+    const value = getPathValue(raw, path);
+
+    if (value !== undefined && value !== null && value !== "") {
+      return String(value);
+    }
+  }
+
+  return undefined;
+}
+
+function getFirstNumberAtPaths(raw: unknown, paths: string[][]) {
+  for (const path of paths) {
+    const value = Number(getPathValue(raw, path));
+
+    if (Number.isFinite(value)) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+function getSearchResultFromContainer(
+  container: unknown,
+): Omit<ExtractedDataokeSearchResult, "detectedPath"> | null {
+  if (!isRecord(container) || !Array.isArray(container.list)) {
+    return null;
+  }
 
   return {
-    code: response.data?.code,
-    innerMsg: response.data?.msg,
-    listCount: result?.list.length,
-    msg: response.msg,
-    pageId: result?.pageId,
-    status: response.status,
-    totalNum: result?.totalNum,
+    list: container.list.filter(isRecord) as DataokeRawProduct[],
+    pageId: getStringFieldValue(container, "pageId"),
+    totalNum: getNumberFieldValue(container, "totalNum"),
+  };
+}
+
+function extractDataokeSearchResult(raw: unknown): ExtractedDataokeSearchResult {
+  const candidates = [
+    { path: ["data", "data"], detectedPath: "raw.data.data.list" },
+    { path: ["data"], detectedPath: "raw.data.list" },
+    {
+      path: ["data", "data", "data"],
+      detectedPath: "raw.data.data.data.list",
+    },
+    { path: ["result"], detectedPath: "raw.result.list" },
+    { path: [], detectedPath: "raw.list" },
+  ];
+
+  for (const candidate of candidates) {
+    const result = getSearchResultFromContainer(
+      getPathValue(raw, candidate.path),
+    );
+
+    if (result) {
+      return {
+        ...result,
+        detectedPath: candidate.detectedPath,
+      };
+    }
+  }
+
+  return {
+    detectedPath: "not_found",
+    list: [],
+  };
+}
+
+function getSearchRawSummary(
+  response: unknown,
+  result: ExtractedDataokeSearchResult,
+): DataokeRawSummary {
+  const dataRecord = getPathValue(response, ["data"]);
+  const innerDataRecord = getPathValue(response, ["data", "data"]);
+  const firstItem = result.list[0];
+
+  return {
+    code: getFirstNumberAtPaths(response, [
+      ["code"],
+      ["data", "code"],
+      ["data", "data", "code"],
+    ]),
+    dataKeys: getRecordKeys(dataRecord),
+    detectedListPath: result.detectedPath,
+    firstItemKeys: getRecordKeys(firstItem),
+    innerDataKeys: getRecordKeys(innerDataRecord),
+    listCount: result.list.length,
+    msg: getFirstStringAtPaths(response, [
+      ["msg"],
+      ["data", "msg"],
+      ["data", "data", "msg"],
+    ]),
+    pageId: result.pageId,
+    status: getFirstNumberAtPaths(response, [
+      ["status"],
+      ["data", "status"],
+      ["data", "data", "status"],
+    ]),
+    topLevelKeys: getRecordKeys(response),
+    totalNum: result.totalNum,
   };
 }
 
@@ -202,6 +350,62 @@ function getSuperCategoryRawSummary(
   };
 }
 
+function getPrivilegeLinkResult(
+  response: DataokeApiBaseResponse<
+    DataokeInnerResponse<DataokePrivilegeLinkResult> | DataokePrivilegeLinkResult
+  >,
+): DataokePrivilegeLinkResult {
+  const data = response.data;
+  const dataRecord: Record<string, unknown> | null = isRecord(data)
+    ? data
+    : null;
+
+  if (dataRecord && isRecord(dataRecord.data)) {
+    return dataRecord.data as DataokePrivilegeLinkResult;
+  }
+
+  if (dataRecord) {
+    return dataRecord as DataokePrivilegeLinkResult;
+  }
+
+  return {};
+}
+
+function getPrivilegeLinkRawSummary(
+  response: DataokeApiBaseResponse<
+    DataokeInnerResponse<DataokePrivilegeLinkResult> | DataokePrivilegeLinkResult
+  >,
+): DataokeRawSummary {
+  const data = response.data;
+  const dataRecord: Record<string, unknown> | null = isRecord(data)
+    ? data
+    : null;
+  const innerResponse =
+    dataRecord && isRecord(dataRecord.data) ? dataRecord : null;
+  const result = getPrivilegeLinkResult(response);
+
+  return {
+    code:
+      typeof innerResponse?.code === "number"
+        ? innerResponse.code
+        : undefined,
+    couponEndTime: result.couponEndTime,
+    couponStartTime: result.couponStartTime,
+    hasActualPrice: result.actualPrice !== undefined,
+    hasCouponClickUrl: Boolean(result.couponClickUrl),
+    hasItemUrl: Boolean(result.itemUrl),
+    hasMaxCommissionRate: result.maxCommissionRate !== undefined,
+    hasOriginalPrice: result.originalPrice !== undefined,
+    hasShortUrl: Boolean(result.shortUrl),
+    hasTpwd: Boolean(result.tpwd),
+    innerMsg:
+      typeof innerResponse?.msg === "string" ? innerResponse.msg : undefined,
+    itemId: result.itemId,
+    msg: response.msg,
+    status: response.status,
+  };
+}
+
 function toMappedProductSummary(
   product: Product,
 ): DataokeMappedProductSummary {
@@ -215,6 +419,21 @@ function toMappedProductSummary(
     shopName: product.shopName,
     shortTitle: product.shortTitle,
     title: product.title,
+  };
+}
+
+function toMappedPromotionLinkSummary(
+  promotionLink: PromotionLink,
+): DataokeMappedPromotionLinkSummary {
+  return {
+    couponUrl: promotionLink.couponUrl,
+    outerItemId: promotionLink.outerItemId,
+    platform: promotionLink.platform,
+    productId: promotionLink.productId,
+    promotionUrl: promotionLink.promotionUrl,
+    source: promotionLink.source,
+    status: promotionLink.status,
+    tpwd: promotionLink.tpwd,
   };
 }
 
@@ -238,28 +457,29 @@ export async function testDataokeSearchAction(
   void _previousState;
 
   try {
-    const response = await dataokeClient.request<
-      DataokeApiBaseResponse<DataokeInnerResponse<DataokeSearchGoodsResult>>
-    >(dataokeEndpoints.searchGoods.path, dataokeConfig.searchVersion, {
+    const response = await dataokeClient.request<unknown>(
+      dataokeEndpoints.searchGoods.path,
+      dataokeConfig.searchVersion,
+      {
       cids: getStringValue(formData, "cids"),
       hasCoupon: getNumberValue(formData, "hasCoupon") ?? 1,
       keyWords: getStringValue(formData, "keyWords"),
       pageId: getStringValue(formData, "pageId") ?? "1",
       pageSize: getLimitedPageSize(formData),
       sort: getStringValue(formData, "sort"),
-    });
+      },
+    );
 
-    const result = getSearchResult(response);
+    const result = extractDataokeSearchResult(response);
     const mappedProducts =
-      result?.list
-        .map(mapDataokeProductToProduct)
-        .map(toMappedProductSummary) ?? [];
+      result.list.map(mapDataokeProductToProduct).map(toMappedProductSummary);
 
     return {
       mappedCategories: [],
+      mappedPromotionLink: null,
       mappedProducts,
       message: "Dataoke search test completed.",
-      rawSummary: getRawSummary(response),
+      rawSummary: getSearchRawSummary(response, result),
       safeErrorSummary: null,
       safeRequestSummary: null,
       success: true,
@@ -286,6 +506,7 @@ export async function testDataokeSuperCategoryAction(): Promise<DataokeTestActio
 
     return {
       mappedCategories,
+      mappedPromotionLink: null,
       mappedProducts: [],
       message: "Dataoke super category test completed.",
       rawSummary: getSuperCategoryRawSummary(response),
@@ -298,15 +519,68 @@ export async function testDataokeSuperCategoryAction(): Promise<DataokeTestActio
   }
 }
 
-export async function testDataokePrivilegeLinkAction(): Promise<DataokeTestActionState> {
-  return {
-    mappedCategories: [],
-    mappedProducts: [],
-    message:
-      "高效转链真实联调暂未启用。请先完成搜索接口和超级分类联调。",
-    rawSummary: null,
-    safeErrorSummary: null,
-    safeRequestSummary: null,
-    success: false,
-  };
+export async function testDataokePrivilegeLinkAction(
+  _previousState: DataokeTestActionState,
+  formData: FormData,
+): Promise<DataokeTestActionState> {
+  void _previousState;
+
+  const goodsId = getStringValue(formData, "goodsId");
+
+  if (!goodsId) {
+    return {
+      mappedCategories: [],
+      mappedProducts: [],
+      mappedPromotionLink: null,
+      message: "goodsId is required.",
+      rawSummary: null,
+      safeErrorSummary: null,
+      safeRequestSummary: null,
+      success: false,
+    };
+  }
+
+  try {
+    const response = await dataokeClient.request<
+      DataokeApiBaseResponse<
+        DataokeInnerResponse<DataokePrivilegeLinkResult> | DataokePrivilegeLinkResult
+      >
+    >(dataokeEndpoints.privilegeLink.path, dataokeConfig.privilegeLinkVersion, {
+      authId: getStringValue(formData, "authId"),
+      bybtqdyh: getNumberValue(formData, "bybtqdyh"),
+      channelId: getStringValue(formData, "channelId"),
+      couponId: getStringValue(formData, "couponId"),
+      externalId: getStringValue(formData, "externalId"),
+      getTopnRate: getNumberValue(formData, "getTopnRate"),
+      goodsId,
+      leftSymbol: getStringValue(formData, "leftSymbol"),
+      pid: (getStringValue(formData, "pid") ?? dataokeConfig.pid) || undefined,
+      promtionType: getNumberValue(formData, "promtionType"),
+      rebateType: getNumberValue(formData, "rebateType"),
+      rightSymbol: getStringValue(formData, "rightSymbol"),
+      specialId: getStringValue(formData, "specialId"),
+      xid: getStringValue(formData, "xid"),
+    });
+    const result = getPrivilegeLinkResult(response);
+    const mappedPromotionLink = toMappedPromotionLinkSummary(
+      mapDataokePrivilegeLinkToPromotionLink(
+        result,
+        `dataoke-${goodsId}`,
+        goodsId,
+      ),
+    );
+
+    return {
+      mappedCategories: [],
+      mappedProducts: [],
+      mappedPromotionLink,
+      message: "Dataoke privilege link test completed.",
+      rawSummary: getPrivilegeLinkRawSummary(response),
+      safeErrorSummary: null,
+      safeRequestSummary: null,
+      success: true,
+    };
+  } catch (error) {
+    return toErrorState(error);
+  }
 }

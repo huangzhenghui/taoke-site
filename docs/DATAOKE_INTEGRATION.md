@@ -214,7 +214,7 @@ Dataoke 原始字段不能直接进入页面。接口返回必须先经过 mappe
 5. 当前账号是否仍要求 SDK 旧签名或额外公共参数。
 6. 是否被网关或请求头策略拦截，可结合 `contentType` 和 `responseTextPreview` 判断。
 
-第一轮真实联调已经只测试搜索接口，`pageSize` 保持最大 10。搜索稳定后，第二轮联调超级分类；超级分类稳定后，再考虑高效转链。
+第一轮真实联调已经只测试搜索接口，`pageSize` 保持最大 10。搜索稳定后，第二轮联调超级分类；超级分类稳定后，第三轮联调高效转链。
 
 ## 超级分类真实联调
 
@@ -234,11 +234,63 @@ Dataoke 原始字段不能直接进入页面。接口返回必须先经过 mappe
 - `cname` -> 生成 `description` / `seoTitle` / `seoDescription`
 - 固定 `status=active`
 
-高效转链仍放到下一阶段。原因是转链接口会涉及 `pid`、`couponId`、推广位、淘口令等更敏感的推广链路字段，应在搜索和分类都稳定后再单独联调。
+搜索接口和超级分类接口真实联调均已通过后，进入第三轮高效转链真实联调。
+
+## 高效转链真实联调
+
+第三轮真实联调目标是大淘客高效转链接口：
+
+- path: `/api/tb-service/get-privilege-link`
+- version: `v1.3.1`
+- method: `GET`
+- 必填业务参数：`goodsId`
+- 可选业务参数：`couponId`、`pid`、`channelId`、`promtionType`、`rebateType`、`specialId`、`externalId`、`xid`、`leftSymbol`、`rightSymbol`、`authId`、`bybtqdyh`、`getTopnRate`
+
+注意 `promtionType` 按大淘客文档拼写保留，不改成 `promotionType`。
+
+`pid` 的处理规则：
+
+- 后台测试页可以手动输入 `pid`。
+- 表单未填写 `pid` 时，Server Action 使用服务端 `.env` 中的 `DATAOKE_PID`。
+- `pid` 不返回到 `rawSummary`，也不展示到页面诊断结果中。
+
+高效转链返回后必须通过 `mapDataokePrivilegeLinkToPromotionLink` 转成内部 `PromotionLink` 结构。后台测试页只展示映射后的 `productId`、`outerItemId`、`platform`、`source`、`promotionUrl`、`couponUrl`、`tpwd`、`status`，以及安全 `rawSummary`。
+
+高效转链成功后，下一阶段才考虑：
+
+- 将转链结果写入数据库 `PromotionLink`。
+- 让后台管理页面读取数据库转链数据。
+- 评估是否把 `/go/[productId]` 切到数据库或实时转链策略。
+- 增加失败重试、限流、过期链接刷新策略。
+
+## 搜索结果结构兼容
+
+搜索接口真实请求成功后，返回结构可能存在多层 `data` 嵌套。页面和 Server Action 不能写死 `raw.data.data.list`，否则会出现接口返回 `msg=ok`，但映射商品为空的问题。
+
+当前通过 `extractDataokeSearchResult` 兼容这些列表路径：
+
+- `raw.data.data.list`
+- `raw.data.list`
+- `raw.data.data.data.list`
+- `raw.result.list`
+- `raw.list`
+
+后台测试页调试时只展示结构摘要：
+
+- `detectedListPath`
+- `listCount`
+- `totalNum`
+- `pageId`
+- `topLevelKeys`
+- `dataKeys`
+- `innerDataKeys`
+- `firstItemKeys`
+
+不要展示完整原始响应、完整商品原始数据、完整请求 URL、完整 `signRan`、`appKey` 或 `appSecret`。如果 `listCount > 0` 但 `mappedProducts` 为空，优先检查 `mapDataokeProductToProduct` 的字段映射；如果 `listCount = 0`，优先更换关键词、分类或排序参数后再测。
 
 ## 当前缺口
 
 - 真实响应的 `code/message/data` 包装结构需要联调确认。
 - 商品字段、分类字段、转链字段需要用真实响应校准。
 - 真实请求启用后的错误处理、限流、日志和重试策略还未实现。
-- 高效转链真实联调、同步任务、数据库写入都不在当前阶段实现。
+- 同步任务、数据库写入、`/go/[productId]` 接入真实转链都不在当前阶段实现。

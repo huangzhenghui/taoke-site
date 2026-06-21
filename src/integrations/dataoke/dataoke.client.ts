@@ -117,9 +117,12 @@ function createSafeRequestSummary(
   businessParams: DataokeRequestParams,
   signedParams: DataokeSignedParams,
 ): DataokeSafeRequestSummary {
+  const sensitiveBusinessParamKeys = new Set(["pid"]);
+
   return {
     businessParamKeys: Object.keys(businessParams)
       .filter((key) => businessParams[key] !== undefined)
+      .filter((key) => !sensitiveBusinessParamKeys.has(key))
       .sort(),
     businessParamsPreview: getBusinessParamsPreview(businessParams),
     endpointPath,

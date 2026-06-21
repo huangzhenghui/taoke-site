@@ -11,6 +11,7 @@ import {
 
 const initialState: DataokeTestActionState = {
   mappedCategories: [],
+  mappedPromotionLink: null,
   mappedProducts: [],
   message: "尚未测试。",
   rawSummary: null,
@@ -60,6 +61,58 @@ function DiagnosticPanel({
       <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-all rounded bg-zinc-950 p-3 text-xs text-zinc-50">
         {JSON.stringify(value, null, 2)}
       </pre>
+    </div>
+  );
+}
+
+function SearchResultSummaryPanel({
+  state,
+}: {
+  state: DataokeTestActionState;
+}) {
+  const listCount = state.rawSummary?.listCount ?? 0;
+  const mappedCount = state.mappedProducts.length;
+  const firstItemKeys = state.rawSummary?.firstItemKeys ?? [];
+
+  return (
+    <div className="mt-4 rounded-md border border-zinc-200 bg-white p-3">
+      <p className="text-xs font-medium text-zinc-500">
+        searchResultSummary
+      </p>
+      <dl className="mt-3 grid gap-3 text-sm md:grid-cols-3">
+        <div>
+          <dt className="text-xs font-medium text-zinc-500">listCount</dt>
+          <dd className="mt-1 text-zinc-950">{listCount}</dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium text-zinc-500">
+            detectedListPath
+          </dt>
+          <dd className="mt-1 break-all text-zinc-950">
+            {state.rawSummary?.detectedListPath ?? "not_tested"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-xs font-medium text-zinc-500">mappedCount</dt>
+          <dd className="mt-1 text-zinc-950">{mappedCount}</dd>
+        </div>
+        <div className="md:col-span-3">
+          <dt className="text-xs font-medium text-zinc-500">firstItemKeys</dt>
+          <dd className="mt-1 break-all text-zinc-950">
+            {firstItemKeys.length > 0 ? firstItemKeys.join(", ") : "-"}
+          </dd>
+        </div>
+      </dl>
+      {state.success && mappedCount === 0 && listCount > 0 ? (
+        <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          已找到原始商品列表，但映射结果为空，请检查 mapper 字段。
+        </p>
+      ) : null}
+      {state.success && listCount === 0 ? (
+        <p className="mt-3 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-600">
+          接口成功，但本次搜索没有返回商品，请更换关键词或分类。
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -176,6 +229,78 @@ function MappedCategoriesPanel({ state }: { state: DataokeTestActionState }) {
   );
 }
 
+function MappedPromotionLinkPanel({
+  state,
+}: {
+  state: DataokeTestActionState;
+}) {
+  const promotionLink = state.mappedPromotionLink;
+
+  return (
+    <div className="mt-4 rounded-md border border-zinc-200 bg-white p-3">
+      <p className="text-xs font-medium text-zinc-500">
+        mappedPromotionLink
+      </p>
+      {promotionLink ? (
+        <dl className="mt-3 grid gap-3 text-sm md:grid-cols-2">
+          <div>
+            <dt className="text-xs font-medium text-zinc-500">productId</dt>
+            <dd className="mt-1 break-all text-zinc-950">
+              {promotionLink.productId}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-zinc-500">outerItemId</dt>
+            <dd className="mt-1 break-all text-zinc-950">
+              {promotionLink.outerItemId}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-zinc-500">platform</dt>
+            <dd className="mt-1 break-all text-zinc-950">
+              {promotionLink.platform}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-zinc-500">source</dt>
+            <dd className="mt-1 break-all text-zinc-950">
+              {promotionLink.source}
+            </dd>
+          </div>
+          <div className="md:col-span-2">
+            <dt className="text-xs font-medium text-zinc-500">
+              promotionUrl
+            </dt>
+            <dd className="mt-1 break-all text-zinc-950">
+              {promotionLink.promotionUrl}
+            </dd>
+          </div>
+          <div className="md:col-span-2">
+            <dt className="text-xs font-medium text-zinc-500">couponUrl</dt>
+            <dd className="mt-1 break-all text-zinc-950">
+              {promotionLink.couponUrl}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-zinc-500">tpwd</dt>
+            <dd className="mt-1 break-all text-zinc-950">
+              {promotionLink.tpwd}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium text-zinc-500">status</dt>
+            <dd className="mt-1 break-all text-zinc-950">
+              {promotionLink.status}
+            </dd>
+          </div>
+        </dl>
+      ) : (
+        <p className="mt-3 text-sm text-zinc-500">暂无映射后的转链结果。</p>
+      )}
+    </div>
+  );
+}
+
 function TextInput({
   label,
   name,
@@ -241,6 +366,7 @@ export function DataokeSearchTestForm() {
         label="safeErrorSummary"
         value={state.safeErrorSummary}
       />
+      <SearchResultSummaryPanel state={state} />
       <RawSummaryPanel state={state} />
       <MappedProductsPanel state={state} />
     </section>
@@ -287,18 +413,32 @@ export function DataokePrivilegeLinkTestForm() {
     <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-zinc-950">高效转链测试</h2>
       <p className="mt-2 text-sm text-zinc-600">
-        本轮暂不真实联调高效转链，避免在搜索字段未稳定前扩大外部接口范围。
+        本轮只在后台测试高效转链接口，结果不会写入数据库，也不会影响前台页面。
       </p>
       <form action={formAction} className="mt-4 grid gap-4 md:grid-cols-3">
         <TextInput label="goodsId" name="goodsId" />
         <TextInput label="couponId" name="couponId" />
-        <TextInput label="pid" name="pid" />
+        <div>
+          <TextInput label="pid" name="pid" />
+          <p className="mt-2 text-xs text-zinc-500">
+            留空则使用服务端 .env 中的 DATAOKE_PID。
+          </p>
+        </div>
         <div className="md:col-span-3">
-          <SubmitButton label="查看当前状态" />
+          <SubmitButton label="测试高效转链" />
         </div>
       </form>
       <StatusPanel state={state} />
+      <DiagnosticPanel
+        label="safeRequestSummary"
+        value={state.safeRequestSummary}
+      />
+      <DiagnosticPanel
+        label="safeErrorSummary"
+        value={state.safeErrorSummary}
+      />
       <RawSummaryPanel state={state} />
+      <MappedPromotionLinkPanel state={state} />
     </section>
   );
 }

@@ -111,7 +111,7 @@ export function mapDataokePrivilegeLinkToPromotionLink(
     platform: "taobao",
     productId,
     promotionPositionId: "",
-    promotionUrl: toStringValue(result.itemUrl ?? result.shortUrl),
+    promotionUrl: toStringValue(result.itemUrl || result.shortUrl),
     source: "dataoke",
     status: "active",
     tpwd: toStringValue(result.tpwd),
