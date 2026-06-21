@@ -27,6 +27,7 @@ export type DataokeRawProduct = {
   desc?: string;
   couponReceiveNum?: string | number;
   couponLink?: string;
+  couponId?: string;
   couponEndTime?: string;
   couponStartTime?: string;
   couponPrice?: string | number;
@@ -56,6 +57,7 @@ export type DataokeRawProduct = {
   hotPush?: string | number;
   teamName?: string;
   itemLink?: string;
+  quanMLink?: string;
   yunfeixian?: string | number;
   freeshipRemoteDistrict?: string | number;
   shopLogo?: string;

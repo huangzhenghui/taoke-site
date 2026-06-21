@@ -17,6 +17,7 @@ const initialState: DataokeTestActionState = {
   rawSummary: null,
   safeErrorSummary: null,
   safeRequestSummary: null,
+  searchCandidates: [],
   success: false,
 };
 
@@ -169,6 +170,67 @@ function MappedProductsPanel({ state }: { state: DataokeTestActionState }) {
             <tr>
               <td className="px-3 py-6 text-center text-zinc-500" colSpan={9}>
                 暂无映射后的商品。
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SearchCandidatesPanel({ state }: { state: DataokeTestActionState }) {
+  return (
+    <div className="mt-4 overflow-x-auto rounded-md border border-zinc-200 bg-white">
+      <div className="border-b border-zinc-200 px-3 py-3">
+        <p className="text-sm font-semibold text-zinc-950">转链候选商品</p>
+        <p className="mt-1 text-xs text-zinc-500">
+          高效转链测试时，goodsId 必填；couponId 可选。如果 couponId 为空，可以先留空测试。
+        </p>
+      </div>
+      <table className="min-w-full divide-y divide-zinc-200 text-sm">
+        <thead className="bg-zinc-50 text-left text-zinc-500">
+          <tr>
+            <th className="px-3 py-2 font-medium">title</th>
+            <th className="px-3 py-2 font-medium">goodsId</th>
+            <th className="px-3 py-2 font-medium">couponId</th>
+            <th className="px-3 py-2 font-medium">actualPrice</th>
+            <th className="px-3 py-2 font-medium">couponPrice</th>
+            <th className="px-3 py-2 font-medium">commissionRate</th>
+            <th className="px-3 py-2 font-medium">shopName</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-zinc-200">
+          {state.searchCandidates.length > 0 ? (
+            state.searchCandidates.map((candidate) => (
+              <tr key={`${candidate.goodsId}-${candidate.couponId}`}>
+                <td className="max-w-72 px-3 py-2 font-medium text-zinc-950">
+                  {candidate.title || candidate.dtitle}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {candidate.goodsId}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {candidate.couponId || "-"}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {candidate.actualPrice}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {candidate.couponPrice}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {candidate.commissionRate}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {candidate.shopName}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td className="px-3 py-6 text-center text-zinc-500" colSpan={7}>
+                暂无转链候选商品。
               </td>
             </tr>
           )}
@@ -368,6 +430,7 @@ export function DataokeSearchTestForm() {
       />
       <SearchResultSummaryPanel state={state} />
       <RawSummaryPanel state={state} />
+      <SearchCandidatesPanel state={state} />
       <MappedProductsPanel state={state} />
     </section>
   );

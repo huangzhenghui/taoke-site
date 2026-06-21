@@ -43,6 +43,9 @@ type DataokeRawSummary = {
   itemId?: string | number;
   dataKeys?: string[];
   detectedListPath?: string;
+  candidateCount?: number;
+  firstCandidateHasCouponId?: boolean;
+  firstCandidateHasGoodsId?: boolean;
   firstItemKeys?: string[];
   innerDataKeys?: string[];
   topLevelKeys?: string[];
@@ -78,6 +81,24 @@ type DataokeMappedPromotionLinkSummary = Pick<
   | "tpwd"
 >;
 
+type DataokeSearchCandidate = {
+  actualPrice: string;
+  commissionRate: string;
+  couponEndTime: string;
+  couponId: string;
+  couponPrice: string;
+  dtitle: string;
+  goodsId: string;
+  hasCouponLink: boolean;
+  hasItemLink: boolean;
+  hasQuanMLink: boolean;
+  mainPicPreview: string;
+  originalPrice: string;
+  outerItemId: string;
+  shopName: string;
+  title: string;
+};
+
 type ExtractedDataokeSearchResult = {
   detectedPath: string;
   list: DataokeRawProduct[];
@@ -94,6 +115,7 @@ export type DataokeTestActionState = {
   mappedCategories: DataokeMappedCategorySummary[];
   mappedPromotionLink: DataokeMappedPromotionLinkSummary | null;
   mappedProducts: DataokeMappedProductSummary[];
+  searchCandidates: DataokeSearchCandidate[];
 };
 
 function getStringValue(formData: FormData, key: string) {
@@ -162,6 +184,7 @@ function toErrorState(error: unknown): DataokeTestActionState {
       rawSummary: null,
       safeErrorSummary: diagnostics.safeErrorSummary,
       safeRequestSummary: diagnostics.safeRequestSummary,
+      searchCandidates: [],
       success: false,
     };
   }
@@ -174,6 +197,7 @@ function toErrorState(error: unknown): DataokeTestActionState {
     rawSummary: null,
     safeErrorSummary: null,
     safeRequestSummary: null,
+    searchCandidates: [],
     success: false,
   };
 }
@@ -277,9 +301,48 @@ function extractDataokeSearchResult(raw: unknown): ExtractedDataokeSearchResult 
   };
 }
 
+function toCandidateString(value: unknown) {
+  if (value === undefined || value === null) {
+    return "";
+  }
+
+  return String(value);
+}
+
+function toMainPicPreview(value: unknown) {
+  const mainPic = toCandidateString(value);
+
+  return mainPic ? mainPic.slice(0, 48) : "";
+}
+
+function toDataokeSearchCandidate(
+  raw: DataokeRawProduct,
+): DataokeSearchCandidate {
+  const goodsId = toCandidateString(raw.goodsId);
+
+  return {
+    actualPrice: toCandidateString(raw.actualPrice),
+    commissionRate: toCandidateString(raw.commissionRate),
+    couponEndTime: toCandidateString(raw.couponEndTime),
+    couponId: toCandidateString(raw.couponId),
+    couponPrice: toCandidateString(raw.couponPrice),
+    dtitle: toCandidateString(raw.dtitle),
+    goodsId,
+    hasCouponLink: Boolean(raw.couponLink),
+    hasItemLink: Boolean(raw.itemLink),
+    hasQuanMLink: Boolean(raw.quanMLink),
+    mainPicPreview: toMainPicPreview(raw.mainPic),
+    originalPrice: toCandidateString(raw.originalPrice),
+    outerItemId: goodsId,
+    shopName: toCandidateString(raw.shopName),
+    title: toCandidateString(raw.title),
+  };
+}
+
 function getSearchRawSummary(
   response: unknown,
   result: ExtractedDataokeSearchResult,
+  searchCandidates: DataokeSearchCandidate[],
 ): DataokeRawSummary {
   const dataRecord = getPathValue(response, ["data"]);
   const innerDataRecord = getPathValue(response, ["data", "data"]);
@@ -291,8 +354,11 @@ function getSearchRawSummary(
       ["data", "code"],
       ["data", "data", "code"],
     ]),
+    candidateCount: searchCandidates.length,
     dataKeys: getRecordKeys(dataRecord),
     detectedListPath: result.detectedPath,
+    firstCandidateHasCouponId: Boolean(searchCandidates[0]?.couponId),
+    firstCandidateHasGoodsId: Boolean(searchCandidates[0]?.goodsId),
     firstItemKeys: getRecordKeys(firstItem),
     innerDataKeys: getRecordKeys(innerDataRecord),
     listCount: result.list.length,
@@ -471,6 +537,7 @@ export async function testDataokeSearchAction(
     );
 
     const result = extractDataokeSearchResult(response);
+    const searchCandidates = result.list.map(toDataokeSearchCandidate);
     const mappedProducts =
       result.list.map(mapDataokeProductToProduct).map(toMappedProductSummary);
 
@@ -479,9 +546,10 @@ export async function testDataokeSearchAction(
       mappedPromotionLink: null,
       mappedProducts,
       message: "Dataoke search test completed.",
-      rawSummary: getSearchRawSummary(response, result),
+      rawSummary: getSearchRawSummary(response, result, searchCandidates),
       safeErrorSummary: null,
       safeRequestSummary: null,
+      searchCandidates,
       success: true,
     };
   } catch (error) {
@@ -512,6 +580,7 @@ export async function testDataokeSuperCategoryAction(): Promise<DataokeTestActio
       rawSummary: getSuperCategoryRawSummary(response),
       safeErrorSummary: null,
       safeRequestSummary: null,
+      searchCandidates: [],
       success: true,
     };
   } catch (error) {
@@ -536,6 +605,7 @@ export async function testDataokePrivilegeLinkAction(
       rawSummary: null,
       safeErrorSummary: null,
       safeRequestSummary: null,
+      searchCandidates: [],
       success: false,
     };
   }
@@ -578,6 +648,7 @@ export async function testDataokePrivilegeLinkAction(
       rawSummary: getPrivilegeLinkRawSummary(response),
       safeErrorSummary: null,
       safeRequestSummary: null,
+      searchCandidates: [],
       success: true,
     };
   } catch (error) {

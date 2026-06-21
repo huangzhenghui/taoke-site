@@ -288,6 +288,28 @@ Dataoke 原始字段不能直接进入页面。接口返回必须先经过 mappe
 
 不要展示完整原始响应、完整商品原始数据、完整请求 URL、完整 `signRan`、`appKey` 或 `appSecret`。如果 `listCount > 0` 但 `mappedProducts` 为空，优先检查 `mapDataokeProductToProduct` 的字段映射；如果 `listCount = 0`，优先更换关键词、分类或排序参数后再测。
 
+搜索接口返回的 `goodsId` 是后续高效转链的核心参数。`couponId` 可选：如果搜索结果有 `couponId`，高效转链测试时可以一并传入；如果为空，可以先只传 `goodsId` 测试。
+
+后台测试页新增 `searchCandidates`，用于从搜索结果中安全展示转链候选商品。候选商品只包含这些字段：
+
+- `title`
+- `dtitle`
+- `goodsId`
+- `couponId`
+- `outerItemId`
+- `actualPrice`
+- `originalPrice`
+- `couponPrice`
+- `commissionRate`
+- `shopName`
+- `couponEndTime`
+- `hasCouponLink`
+- `hasItemLink`
+- `hasQuanMLink`
+- `mainPicPreview`
+
+`searchCandidates` 不展示完整原始商品对象，不展示完整推广链接，不展示完整请求 URL，不展示完整 `signRan`，也不展示 `appKey` / `appSecret` / `pid`。
+
 ## 当前缺口
 
 - 真实响应的 `code/message/data` 包装结构需要联调确认。
