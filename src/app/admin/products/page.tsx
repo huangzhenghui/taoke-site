@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
+
 import { getAllProducts } from "@/modules/product";
+
+export const metadata: Metadata = {
+  title: "商品管理",
+  robots: {
+    follow: false,
+    index: false,
+  },
+};
 
 const currencyFormatter = new Intl.NumberFormat("zh-CN", {
   currency: "CNY",

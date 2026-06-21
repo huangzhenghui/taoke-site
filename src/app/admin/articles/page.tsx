@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
+
 import { getAllArticles } from "@/modules/article";
+
+export const metadata: Metadata = {
+  title: "文章管理",
+  robots: {
+    follow: false,
+    index: false,
+  },
+};
 
 const dateFormatter = new Intl.DateTimeFormat("zh-CN", {
   day: "2-digit",

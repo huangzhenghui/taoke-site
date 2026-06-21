@@ -16,6 +16,11 @@ const currencyFormatter = new Intl.NumberFormat("zh-CN", {
   style: "currency",
 });
 
+const noindexRobots: Metadata["robots"] = {
+  follow: false,
+  index: false,
+};
+
 type GoPageProps = {
   params: Promise<{
     productId: string;
@@ -37,12 +42,14 @@ export async function generateMetadata({
   if (!product) {
     return {
       title: "领取优惠",
+      robots: noindexRobots,
     };
   }
 
   return {
     title: `领取优惠 - ${product.title}`,
     description: "前往第三方平台领取优惠，本站不直接销售商品",
+    robots: noindexRobots,
   };
 }
 

@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
+
 import { getAllPromotionLinks } from "@/modules/promotion-link";
+
+export const metadata: Metadata = {
+  title: "推广链接管理",
+  robots: {
+    follow: false,
+    index: false,
+  },
+};
 
 export default function AdminPromotionLinksPage() {
   const promotionLinks = getAllPromotionLinks();

@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
+
 import { getAllSeoPages } from "@/modules/seo-page";
+
+export const metadata: Metadata = {
+  title: "专题管理",
+  robots: {
+    follow: false,
+    index: false,
+  },
+};
 
 export default function AdminTopicsPage() {
   const topics = getAllSeoPages();

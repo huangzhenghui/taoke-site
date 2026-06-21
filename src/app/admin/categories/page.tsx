@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
+
 import { getAllCategories } from "@/modules/category";
+
+export const metadata: Metadata = {
+  title: "分类管理",
+  robots: {
+    follow: false,
+    index: false,
+  },
+};
 
 export default function AdminCategoriesPage() {
   const categories = getAllCategories();

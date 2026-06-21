@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getAllArticles } from "@/modules/article";
@@ -5,6 +6,14 @@ import { getAllCategories } from "@/modules/category";
 import { getAllProducts } from "@/modules/product";
 import { getAllPromotionLinks } from "@/modules/promotion-link";
 import { getAllSeoPages } from "@/modules/seo-page";
+
+export const metadata: Metadata = {
+  title: "管理后台",
+  robots: {
+    follow: false,
+    index: false,
+  },
+};
 
 const quickLinks = [
   { href: "/admin/products", label: "商品管理" },
