@@ -12,7 +12,7 @@ export const mockSeoPages: SeoPage[] = [
       "办公桌面专题优先围绕久坐舒适度、桌面照明和高频使用效率展开，适合后续承接办公好物、居家办公装备等搜索需求。",
     keywords: ["办公桌面好物", "居家办公装备", "人体工学办公椅", "护眼台灯"],
     categoryId: "cat-home",
-    categoryName: "家居家装",
+    categoryName: "办公好物",
     relatedProductIds: ["mock-product-003", "mock-product-005"],
     relatedArticleIds: ["mock-article-002", "mock-article-001"],
     status: "published",

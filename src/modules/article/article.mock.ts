@@ -29,7 +29,7 @@ export const mockArticles: Article[] = [
       "办公桌面升级不一定要一次买很多东西，优先解决久坐支撑、桌面照明和收纳秩序。人体工学办公椅适合每天久坐的人群，台灯则能改善夜间阅读和写字体验。预算有限时，应先买真正高频使用的装备。",
     coverImage: "https://placehold.co/1200x630?text=Office+Desk+Essentials",
     categoryId: "cat-home",
-    categoryName: "家居家装",
+    categoryName: "办公好物",
     tags: ["办公桌面", "人体工学", "居家办公"],
     relatedProductIds: ["mock-product-003", "mock-product-005"],
     status: "published",
