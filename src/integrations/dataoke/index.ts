@@ -6,7 +6,12 @@ export {
   dataokeClient,
 } from "./dataoke.client";
 export { DataokeApiAdapter, dataokeApiAdapter } from "./dataoke.adapter";
-export { mapDataokeProductToProduct } from "./dataoke.mapper";
+export {
+  mapDataokePrivilegeLinkToPromotionLink,
+  mapDataokeProductToProduct,
+  mapDataokeSuperCategoryToCategory,
+  normalizeDataokeImageUrl,
+} from "./dataoke.mapper";
 export {
   createDataokeNonce,
   createDataokeSignRan,
@@ -19,8 +24,17 @@ export type {
 } from "./dataoke.client";
 export type {
   DataokeApiError,
+  DataokeApiBaseResponse,
   DataokeCategoryResponse,
+  DataokeGoodsListParams,
+  DataokeInnerResponse,
   DataokePrivilegeLinkResponse,
+  DataokePrivilegeLinkParams,
+  DataokePrivilegeLinkResult,
   DataokeRawProduct,
   DataokeSearchResponse,
+  DataokeSearchGoodsParams,
+  DataokeSearchGoodsResult,
+  DataokeSubCategory,
+  DataokeSuperCategory,
 } from "./dataoke.types";

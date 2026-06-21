@@ -75,6 +75,71 @@ DATAOKE_SEARCH_VERSION="v2.1.2"
 - `dataoke.client.ts`：构造签名参数和请求 URL，本阶段不执行真实 fetch。
 - `dataoke.adapter.ts`：实现 `ProductSourceAdapter`。
 
+## 字段映射原则
+
+Dataoke 原始字段不能直接进入页面。接口返回必须先经过 mapper 转成内部模型：
+
+- 商品数据转成内部 `Product`
+- 超级分类转成内部 `Category`
+- 高效转链结果转成内部 `PromotionLink`
+
+这样可以避免页面和第三方字段强绑定，也方便后续替换数据源、做缓存、入库和字段校验。
+
+## 商品字段映射
+
+| Dataoke 字段 | 内部 Product 字段 | 说明 |
+| --- | --- | --- |
+| `goodsId` | `outerItemId` | 外部商品 ID |
+| `goodsId` | `id` | 内部 ID 暂用 `dataoke-{goodsId}` |
+| `shopType` | `platform` | `1` 映射为 `tmall`，`0` 和其他值暂映射为 `taobao` |
+| 固定值 | `source` | 固定为 `dataoke` |
+| `title` | `title` | 商品标题 |
+| `dtitle` / `title` | `shortTitle` | 优先使用短标题 |
+| `desc` | `description` | 商品描述 |
+| `mainPic` | `mainImage` | 先经过 `normalizeDataokeImageUrl` |
+| `originalPrice` | `price` | 原价 |
+| `actualPrice` | `finalPrice` | 券后价或到手价 |
+| `couponPrice` | `couponAmount` | 优惠券金额 |
+| `commissionRate` | `commissionRate` | 佣金比例 |
+| `shopName` | `shopName` | 店铺名称 |
+| `cid` | `categoryId` | 大淘客分类 ID |
+| `cid` | `categorySlug` | 暂用 `dataoke-{cid}` |
+| `cid` | `categoryName` | 暂用简单映射，无法映射时为“大淘客分类” |
+| `itemLink` | `promotionUrl` | 推广链接占位 |
+| `couponLink` | `couponUrl` | 优惠券链接占位 |
+
+`mainPic` 可能以 `//` 开头，必须补成 `https://` 形式后再进入内部模型。
+
+## 转链字段映射
+
+| Dataoke 字段 | 内部 PromotionLink 字段 | 说明 |
+| --- | --- | --- |
+| `itemUrl` / `shortUrl` | `promotionUrl` | 优先使用 `itemUrl` |
+| `couponClickUrl` | `couponUrl` | 优惠券领取链接 |
+| `tpwd` | `tpwd` | 淘口令 |
+| 外部传入 | `productId` | 内部商品 ID |
+| 外部传入 | `outerItemId` | 大淘客商品 ID |
+| 固定值 | `platform` | 暂用 `taobao` |
+| 固定值 | `source` | 固定为 `dataoke` |
+| 固定值 | `status` | 当前 mapper 默认 `active` |
+
+当前内部 `PromotionLink` 类型还没有 `raw` 字段，完整大淘客转链响应暂不保存。后续如需要排查转链问题，可以在模型中增加 `raw`。
+
+## 分类字段映射
+
+| Dataoke 字段 | 内部 Category 字段 | 说明 |
+| --- | --- | --- |
+| `cid` | `id` | 暂用 `dataoke-{cid}` |
+| `cid` | `slug` | 暂用 `dataoke-{cid}` |
+| `cname` | `name` | 分类名称 |
+| `cname` | `description` | 生成基础分类说明 |
+| `cname` | `seoTitle` | 生成基础 SEO 标题 |
+| `cname` | `seoDescription` | 生成基础 SEO 描述 |
+| `cid` | `sortOrder` | 数字化后作为排序值 |
+| 固定值 | `status` | 当前 mapper 默认 `active` |
+
+大淘客 `cid` 和内部分类当前使用 `dataoke-{cid}` 过渡。后续上线前建议建立正式分类映射表，把大淘客分类映射到站内稳定分类体系。
+
 ## 后续联调顺序
 
 1. 在本地 `.env` 填入测试用 `DATAOKE_APP_KEY`、`DATAOKE_APP_SECRET`、`DATAOKE_PID`。

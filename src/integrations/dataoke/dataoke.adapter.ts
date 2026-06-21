@@ -26,7 +26,7 @@ export class DataokeApiAdapter implements ProductSourceAdapter {
       dataokeEndpoints.searchGoods.path,
       dataokeConfig.searchVersion,
       {
-        keyword: params.keyword,
+        keyWords: params.keyword,
         pageId: params.page,
         pageSize: params.pageSize,
       },
@@ -38,7 +38,7 @@ export class DataokeApiAdapter implements ProductSourceAdapter {
       page: params.page,
       pageSize: params.pageSize,
       products,
-      total: response.total ?? products.length,
+      total: response.totalNum ?? products.length,
     };
   }
 
@@ -72,7 +72,7 @@ export class DataokeApiAdapter implements ProductSourceAdapter {
     return {
       couponUrl: response.couponClickUrl ?? "",
       promotionUrl: response.itemUrl ?? response.shortUrl ?? "",
-      raw: response.raw ?? response,
+      raw: response,
       tpwd: response.tpwd ?? response.longTpwd ?? "",
     };
   }
