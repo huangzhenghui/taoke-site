@@ -26,6 +26,13 @@ mock-backed data flow and do not read the database or Dataoke API directly.
 Suggested next steps: make the admin product detail/edit pages database-backed,
 or add more detailed, safely redacted Dataoke import failure records.
 
+`/admin/category-mappings` now provides a database-backed admin view of
+`SourceCategoryMapping` rows, including source/status/search filters. Its
+manual initializer creates or updates a small fixed set of Dataoke base
+mappings without calling the Dataoke API. A Dataoke `cid` must not become a
+long-term SEO category slug directly; future imports should resolve `cid` and
+`subcid` through `SourceCategoryMapping` before setting `categorySlug`.
+
 当前 `src/integrations/dataoke` 是大淘客 API 接入骨架，只用于为后续联调预留结构。
 项目页面仍然读取 mock service，不会直接调用大淘客真实接口。
 

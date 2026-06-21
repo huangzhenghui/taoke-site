@@ -5,6 +5,7 @@ const adminLinks = [
   { href: "/admin/products", label: "商品管理" },
   { href: "/admin/sync-logs", label: "同步日志" },
   { href: "/admin/categories", label: "分类管理" },
+  { href: "/admin/category-mappings", label: "分类映射" },
   { href: "/admin/articles", label: "文章管理" },
   { href: "/admin/topics", label: "专题管理" },
   { href: "/admin/promotion-links", label: "推广链接" },
