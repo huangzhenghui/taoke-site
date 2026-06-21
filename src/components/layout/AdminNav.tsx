@@ -6,6 +6,7 @@ const adminLinks = [
   { href: "/admin/categories", label: "分类管理" },
   { href: "/admin/articles", label: "文章管理" },
   { href: "/admin/topics", label: "专题管理" },
+  { href: "/admin/promotion-links", label: "推广链接" },
   { href: "/", label: "返回前台首页" },
 ];
 

@@ -79,7 +79,10 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
   return (
     <main className="min-h-screen bg-zinc-50 px-5 py-8 text-zinc-950 sm:px-8 lg:px-12">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-        <Link className="text-sm font-medium text-zinc-600 hover:text-zinc-950" href="/">
+        <Link
+          className="text-sm font-medium text-zinc-600 hover:text-zinc-950"
+          href="/"
+        >
           返回首页
         </Link>
 
@@ -157,18 +160,18 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
             </section>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <button
-                className="h-11 rounded-md bg-amber-500 px-4 text-sm font-semibold text-white"
-                type="button"
+              <Link
+                className="flex h-11 items-center justify-center rounded-md bg-amber-500 px-4 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+                href={`/go/${product.id}`}
               >
                 领取优惠券
-              </button>
-              <button
-                className="h-11 rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white"
-                type="button"
+              </Link>
+              <Link
+                className="flex h-11 items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-zinc-800"
+                href={`/go/${product.id}`}
               >
                 去购买
-              </button>
+              </Link>
             </div>
           </div>
         </article>

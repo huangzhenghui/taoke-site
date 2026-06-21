@@ -73,12 +73,20 @@ export function ProductCard({ product }: ProductCardProps) {
             </span>
           </div>
 
-          <Link
-            className="flex h-10 w-full items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-            href={`/item/${product.id}`}
-          >
-            查看详情
-          </Link>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Link
+              className="flex h-10 items-center justify-center rounded-md border border-zinc-200 bg-white px-4 text-sm font-medium text-zinc-700 transition-colors hover:border-zinc-300 hover:bg-zinc-50"
+              href={`/item/${product.id}`}
+            >
+              查看详情
+            </Link>
+            <Link
+              className="flex h-10 items-center justify-center rounded-md bg-zinc-950 px-4 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+              href={`/go/${product.id}`}
+            >
+              领取优惠
+            </Link>
+          </div>
         </div>
       </div>
     </article>
