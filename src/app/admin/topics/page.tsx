@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { getAllSeoPages } from "@/modules/seo-page";
 
 export const metadata: Metadata = {
@@ -16,12 +18,12 @@ export default function AdminTopicsPage() {
   return (
     <main className="px-5 py-8 text-zinc-950 sm:px-8 lg:px-12">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <header>
-          <h1 className="text-3xl font-semibold tracking-normal">专题管理</h1>
-          <p className="mt-2 text-sm text-zinc-600">
-            只读展示当前 mock SEO 专题数据。
-          </p>
-        </header>
+        <AdminPageHeader
+          actionHref="/admin/topics/new"
+          actionLabel="新增专题"
+          description="只读展示当前 mock SEO 专题数据，并提供表单骨架入口。"
+          title="专题管理"
+        />
 
         <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white shadow-sm">
           <table className="min-w-full divide-y divide-zinc-200 text-sm">
@@ -32,6 +34,7 @@ export default function AdminTopicsPage() {
                 <th className="px-4 py-3 font-medium">分类</th>
                 <th className="px-4 py-3 font-medium">状态</th>
                 <th className="px-4 py-3 font-medium">keywords</th>
+                <th className="px-4 py-3 font-medium">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200">
@@ -47,6 +50,14 @@ export default function AdminTopicsPage() {
                   <td className="px-4 py-3 text-zinc-600">{topic.status}</td>
                   <td className="px-4 py-3 text-zinc-600">
                     {topic.keywords.join("、")}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      className="font-medium text-zinc-950 underline underline-offset-4"
+                      href={`/admin/topics/${topic.slug}/edit`}
+                    >
+                      编辑
+                    </Link>
                   </td>
                 </tr>
               ))}

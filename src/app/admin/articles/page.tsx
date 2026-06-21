@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { getAllArticles } from "@/modules/article";
 
 export const metadata: Metadata = {
@@ -22,12 +24,12 @@ export default function AdminArticlesPage() {
   return (
     <main className="px-5 py-8 text-zinc-950 sm:px-8 lg:px-12">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <header>
-          <h1 className="text-3xl font-semibold tracking-normal">文章管理</h1>
-          <p className="mt-2 text-sm text-zinc-600">
-            只读展示当前 mock 导购文章数据。
-          </p>
-        </header>
+        <AdminPageHeader
+          actionHref="/admin/articles/new"
+          actionLabel="新增文章"
+          description="只读展示当前 mock 导购文章数据，并提供表单骨架入口。"
+          title="文章管理"
+        />
 
         <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white shadow-sm">
           <table className="min-w-full divide-y divide-zinc-200 text-sm">
@@ -38,6 +40,7 @@ export default function AdminArticlesPage() {
                 <th className="px-4 py-3 font-medium">分类</th>
                 <th className="px-4 py-3 font-medium">状态</th>
                 <th className="px-4 py-3 font-medium">发布时间</th>
+                <th className="px-4 py-3 font-medium">操作</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-200">
@@ -55,6 +58,14 @@ export default function AdminArticlesPage() {
                   </td>
                   <td className="px-4 py-3 text-zinc-600">
                     {dateFormatter.format(new Date(article.publishedAt))}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      className="font-medium text-zinc-950 underline underline-offset-4"
+                      href={`/admin/articles/${article.slug}/edit`}
+                    >
+                      编辑
+                    </Link>
                   </td>
                 </tr>
               ))}
