@@ -71,6 +71,14 @@ existing data sources. Suggested next steps are reading a database
 `PromotionLink` in `/go/[productId]` or making the product detail page
 database-backed.
 
+`/go/[productId]` now resolves local database PromotionLinks before the legacy
+mock fallback. It verifies that both the Product and PromotionLink are active,
+then redirects with this priority: `couponUrl`, `promotionUrl`, and `shortUrl`.
+The public route never requests the Dataoke API or displays a promotion URL.
+When no usable local or mock link exists, it shows a friendly unavailable-link
+page. Suggested next steps are making the product detail or category page read
+database Products.
+
 当前 `src/integrations/dataoke` 是大淘客 API 接入骨架，只用于为后续联调预留结构。
 项目页面仍然读取 mock service，不会直接调用大淘客真实接口。
 

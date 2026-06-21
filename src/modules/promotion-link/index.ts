@@ -4,6 +4,8 @@ export {
   getAllPromotionLinks,
   getPromotionLinkByProductId,
 } from "./promotion-link.service";
+export { getPromotionLinkForRedirect } from "./promotion-link-db.service";
+export type { PromotionLinkRedirectTarget } from "./promotion-link-db.service";
 export type {
   PromotionLink,
   PromotionLinkStatus,
