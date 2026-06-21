@@ -10,6 +10,10 @@ export {
 export { getAdminProductsFromDb } from "./product-db.service";
 export type { AdminProductsDbQuery } from "./product-db.service";
 export type {
+  AdminProductWithQualityIssues,
+  ProductQualityIssue,
+} from "./product-db.service";
+export type {
   Product,
   ProductPlatform,
   ProductSource,

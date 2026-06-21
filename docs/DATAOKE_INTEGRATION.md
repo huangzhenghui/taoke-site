@@ -39,6 +39,15 @@ When no mapping exists, both use `dataoke-{cid}` as the category ID and slug
 fallback. Existing products with `manualCategoryLocked=true` retain their
 manually assigned category fields.
 
+`/admin/products` now supports category-slug and platform filtering alongside
+source/status/search filters, plus read-only data-quality checks. An unmapped
+category is identified by a `categorySlug` beginning with `dataoke-` and can be
+corrected through `/admin/category-mappings`. Missing title, item ID, final
+price, coupon amount, or main image should first be investigated in the mapper
+and the corresponding Dataoke response fields. Missing promotion links are
+reported from the local `PromotionLink` relation; a future batch link-conversion
+task can repair them without changing the product import flow.
+
 当前 `src/integrations/dataoke` 是大淘客 API 接入骨架，只用于为后续联调预留结构。
 项目页面仍然读取 mock service，不会直接调用大淘客真实接口。
 
