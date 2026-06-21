@@ -7,6 +7,8 @@ export {
   getProductsByIds,
   searchProductsByKeyword,
 } from "./product.service";
+export { getAdminProductsFromDb } from "./product-db.service";
+export type { AdminProductsDbQuery } from "./product-db.service";
 export type {
   Product,
   ProductPlatform,
