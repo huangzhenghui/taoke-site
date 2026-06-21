@@ -180,4 +180,4 @@ export type DataokeApiError = {
 
 export type DataokeSearchResponse = DataokeSearchGoodsResult;
 export type DataokePrivilegeLinkResponse = DataokePrivilegeLinkResult;
-export type DataokeCategoryResponse = DataokeSuperCategory;
+export type DataokeCategoryResponse = DataokeSuperCategory[];

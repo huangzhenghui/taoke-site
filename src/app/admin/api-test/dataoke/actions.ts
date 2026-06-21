@@ -6,14 +6,18 @@ import {
   dataokeConfig,
   dataokeEndpoints,
   mapDataokeProductToProduct,
+  mapDataokeSuperCategoryToCategory,
 } from "@/integrations/dataoke";
 import type {
   DataokeApiBaseResponse,
+  DataokeCategoryResponse,
   DataokeInnerResponse,
   DataokeSafeErrorSummary,
   DataokeSafeRequestSummary,
   DataokeSearchGoodsResult,
+  DataokeSuperCategory,
 } from "@/integrations/dataoke";
+import type { Category } from "@/modules/category";
 import type { Product } from "@/modules/product";
 
 type DataokeRawSummary = {
@@ -39,12 +43,18 @@ type DataokeMappedProductSummary = Pick<
   | "title"
 >;
 
+type DataokeMappedCategorySummary = Pick<
+  Category,
+  "id" | "name" | "seoTitle" | "slug" | "sortOrder" | "status"
+>;
+
 export type DataokeTestActionState = {
   success: boolean;
   message: string;
   rawSummary: DataokeRawSummary | null;
   safeErrorSummary: DataokeSafeErrorSummary | null;
   safeRequestSummary: DataokeSafeRequestSummary | null;
+  mappedCategories: DataokeMappedCategorySummary[];
   mappedProducts: DataokeMappedProductSummary[];
 };
 
@@ -107,6 +117,7 @@ function toErrorState(error: unknown): DataokeTestActionState {
     const diagnostics = getSafeDiagnostics(error);
 
     return {
+      mappedCategories: [],
       mappedProducts: [],
       message: error.message,
       rawSummary: null,
@@ -117,6 +128,7 @@ function toErrorState(error: unknown): DataokeTestActionState {
   }
 
   return {
+    mappedCategories: [],
     mappedProducts: [],
     message: "Dataoke test action failed.",
     rawSummary: null,
@@ -152,6 +164,44 @@ function getRawSummary(
   };
 }
 
+function getSuperCategoryList(
+  response: DataokeApiBaseResponse<
+    DataokeCategoryResponse | DataokeInnerResponse<DataokeCategoryResponse>
+  >,
+): DataokeSuperCategory[] {
+  const data = response.data;
+
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  if (isRecord(data) && Array.isArray(data.data)) {
+    return data.data;
+  }
+
+  return [];
+}
+
+function getSuperCategoryRawSummary(
+  response: DataokeApiBaseResponse<
+    DataokeCategoryResponse | DataokeInnerResponse<DataokeCategoryResponse>
+  >,
+): DataokeRawSummary {
+  const data = response.data;
+  const innerResponse = isRecord(data) && !Array.isArray(data) ? data : null;
+  const categoryList = getSuperCategoryList(response);
+
+  return {
+    code:
+      typeof innerResponse?.code === "number" ? innerResponse.code : undefined,
+    innerMsg:
+      typeof innerResponse?.msg === "string" ? innerResponse.msg : undefined,
+    listCount: categoryList.length,
+    msg: response.msg,
+    status: response.status,
+  };
+}
+
 function toMappedProductSummary(
   product: Product,
 ): DataokeMappedProductSummary {
@@ -165,6 +215,19 @@ function toMappedProductSummary(
     shopName: product.shopName,
     shortTitle: product.shortTitle,
     title: product.title,
+  };
+}
+
+function toMappedCategorySummary(
+  category: Category,
+): DataokeMappedCategorySummary {
+  return {
+    id: category.id,
+    name: category.name,
+    seoTitle: category.seoTitle,
+    slug: category.slug,
+    sortOrder: category.sortOrder,
+    status: category.status,
   };
 }
 
@@ -193,6 +256,7 @@ export async function testDataokeSearchAction(
         .map(toMappedProductSummary) ?? [];
 
     return {
+      mappedCategories: [],
       mappedProducts,
       message: "Dataoke search test completed.",
       rawSummary: getRawSummary(response),
@@ -206,19 +270,37 @@ export async function testDataokeSearchAction(
 }
 
 export async function testDataokeSuperCategoryAction(): Promise<DataokeTestActionState> {
-  return {
-    mappedProducts: [],
-    message:
-      "超级分类真实联调暂未启用。本轮只优先联调大淘客搜索接口。",
-    rawSummary: null,
-    safeErrorSummary: null,
-    safeRequestSummary: null,
-    success: false,
-  };
+  try {
+    const response = await dataokeClient.request<
+      DataokeApiBaseResponse<
+        DataokeCategoryResponse | DataokeInnerResponse<DataokeCategoryResponse>
+      >
+    >(
+      dataokeEndpoints.superCategory.path,
+      dataokeEndpoints.superCategory.defaultVersion,
+      {},
+    );
+    const mappedCategories = getSuperCategoryList(response)
+      .map(mapDataokeSuperCategoryToCategory)
+      .map(toMappedCategorySummary);
+
+    return {
+      mappedCategories,
+      mappedProducts: [],
+      message: "Dataoke super category test completed.",
+      rawSummary: getSuperCategoryRawSummary(response),
+      safeErrorSummary: null,
+      safeRequestSummary: null,
+      success: true,
+    };
+  } catch (error) {
+    return toErrorState(error);
+  }
 }
 
 export async function testDataokePrivilegeLinkAction(): Promise<DataokeTestActionState> {
   return {
+    mappedCategories: [],
     mappedProducts: [],
     message:
       "高效转链真实联调暂未启用。请先完成搜索接口和超级分类联调。",

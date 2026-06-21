@@ -10,6 +10,7 @@ import {
 } from "./actions";
 
 const initialState: DataokeTestActionState = {
+  mappedCategories: [],
   mappedProducts: [],
   message: "尚未测试。",
   rawSummary: null,
@@ -124,6 +125,57 @@ function MappedProductsPanel({ state }: { state: DataokeTestActionState }) {
   );
 }
 
+function MappedCategoriesPanel({ state }: { state: DataokeTestActionState }) {
+  return (
+    <div className="mt-4 overflow-x-auto rounded-md border border-zinc-200 bg-white">
+      <table className="min-w-full divide-y divide-zinc-200 text-sm">
+        <thead className="bg-zinc-50 text-left text-zinc-500">
+          <tr>
+            <th className="px-3 py-2 font-medium">id</th>
+            <th className="px-3 py-2 font-medium">slug</th>
+            <th className="px-3 py-2 font-medium">name</th>
+            <th className="px-3 py-2 font-medium">seoTitle</th>
+            <th className="px-3 py-2 font-medium">sortOrder</th>
+            <th className="px-3 py-2 font-medium">status</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-zinc-200">
+          {state.mappedCategories.length > 0 ? (
+            state.mappedCategories.map((category) => (
+              <tr key={category.id}>
+                <td className="px-3 py-2 font-medium text-zinc-950">
+                  {category.id}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {category.slug}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {category.name}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {category.seoTitle}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {category.sortOrder}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {category.status}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td className="px-3 py-6 text-center text-zinc-500" colSpan={6}>
+                暂无映射后的分类。
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function TextInput({
   label,
   name,
@@ -211,7 +263,16 @@ export function DataokeSuperCategoryTestForm() {
         <SubmitButton label="查看当前状态" />
       </form>
       <StatusPanel state={state} />
+      <DiagnosticPanel
+        label="safeRequestSummary"
+        value={state.safeRequestSummary}
+      />
+      <DiagnosticPanel
+        label="safeErrorSummary"
+        value={state.safeErrorSummary}
+      />
       <RawSummaryPanel state={state} />
+      <MappedCategoriesPanel state={state} />
     </section>
   );
 }

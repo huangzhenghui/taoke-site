@@ -196,7 +196,7 @@ Dataoke 原始字段不能直接进入页面。接口返回必须先经过 mappe
 
 ## HTTP 479 排查记录
 
-后台 Dataoke 搜索测试页曾遇到 `Dataoke API HTTP request failed with status 479.`。479 更像是网关或接口层拒绝请求，不能继续盲目扩大真实请求范围。
+后台 Dataoke 搜索测试页曾遇到 `Dataoke API HTTP request failed with status 479.`。本次排查后确认当时主要原因是本地 `appKey` / `appSecret` 配置错误。搜索接口修正配置后已完成真实联调。
 
 当前 Client 已增加安全诊断信息：
 
@@ -205,7 +205,7 @@ Dataoke 原始字段不能直接进入页面。接口返回必须先经过 mappe
 - 页面只展示 `safeRequestSummary` 和 `safeErrorSummary`，不展示完整 URL、完整 query、完整 `signRan`、`appKey`、`appSecret` 或 `.env` 内容。
 - `safeRequestSummary` 只包含 endpoint、version、业务参数 key、部分业务参数预览、是否存在 appKey/appSecret/signRan、nonce/timer/signRan 长度，以及 `signRan` 前 6 位。
 
-下一次真实联调优先检查：
+如后续再次遇到 479，优先检查：
 
 1. `signRan` 规则是否仍为 `appKey=xxx&timer=xxx&nonce=xxx&key=xxx` 后 MD5 大写。
 2. 搜索接口参数大小写是否完全使用 `pageId`、`pageSize`、`keyWords`、`cids`、`sort`、`hasCoupon`。
@@ -214,11 +214,31 @@ Dataoke 原始字段不能直接进入页面。接口返回必须先经过 mappe
 5. 当前账号是否仍要求 SDK 旧签名或额外公共参数。
 6. 是否被网关或请求头策略拦截，可结合 `contentType` 和 `responseTextPreview` 判断。
 
-真实联调仍然先只测搜索接口，`pageSize` 保持最大 10。搜索稳定后，再考虑超级分类；超级分类稳定后，再考虑高效转链。
+第一轮真实联调已经只测试搜索接口，`pageSize` 保持最大 10。搜索稳定后，第二轮联调超级分类；超级分类稳定后，再考虑高效转链。
+
+## 超级分类真实联调
+
+第二轮真实联调目标是大淘客超级分类接口：
+
+- path: `/api/category/get-super-category`
+- version: `v1.1.0`
+- method: `GET`
+- 业务参数：无
+
+超级分类接口没有业务参数，适合继续验证公共参数、签名、版本号和网关策略是否稳定。后台测试页只展示 `rawSummary` 和映射后的内部 `Category` 摘要，不展示完整原始响应、不展示完整请求 URL、不展示完整 `signRan`、不展示 `appSecret`。
+
+超级分类返回后必须通过 `mapDataokeSuperCategoryToCategory` 转成内部分类结构：
+
+- `cid` -> `id` / `slug` / `sortOrder`
+- `cname` -> `name`
+- `cname` -> 生成 `description` / `seoTitle` / `seoDescription`
+- 固定 `status=active`
+
+高效转链仍放到下一阶段。原因是转链接口会涉及 `pid`、`couponId`、推广位、淘口令等更敏感的推广链路字段，应在搜索和分类都稳定后再单独联调。
 
 ## 当前缺口
 
 - 真实响应的 `code/message/data` 包装结构需要联调确认。
 - 商品字段、分类字段、转链字段需要用真实响应校准。
 - 真实请求启用后的错误处理、限流、日志和重试策略还未实现。
-- 后台 API 测试页、同步任务、数据库写入都不在当前阶段实现。
+- 高效转链真实联调、同步任务、数据库写入都不在当前阶段实现。
