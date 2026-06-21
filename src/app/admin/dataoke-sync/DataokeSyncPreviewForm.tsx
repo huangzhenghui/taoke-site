@@ -1,17 +1,20 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState, useTransition } from "react";
 
 import {
+  confirmDataokeProductsImportAction,
   previewDataokeProductsAction,
   type DataokeSyncPreviewState,
 } from "./actions";
+import type { DataokeImportResult } from "@/modules/dataoke-sync";
 
 const initialState: DataokeSyncPreviewState = {
   message: "尚未预览。",
   productsPreview: [],
   success: false,
   summary: null,
+  syncParams: null,
 };
 
 function TextInput({
@@ -152,11 +155,51 @@ function ProductsPreviewTable({ state }: { state: DataokeSyncPreviewState }) {
   );
 }
 
+function ImportResultPanel({ result }: { result: DataokeImportResult }) {
+  return (
+    <div className="mt-4 rounded-md border border-zinc-200 bg-white p-3">
+      <p className="text-xs font-medium text-zinc-500">import result</p>
+      <p className="mt-2 text-sm text-zinc-950">{result.message}</p>
+      <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-5">
+        <div><dt className="text-zinc-500">created</dt><dd>{result.createdCount}</dd></div>
+        <div><dt className="text-zinc-500">updated</dt><dd>{result.updatedCount}</dd></div>
+        <div><dt className="text-zinc-500">skipped</dt><dd>{result.skippedCount}</dd></div>
+        <div><dt className="text-zinc-500">failed</dt><dd>{result.failedCount}</dd></div>
+        <div><dt className="text-zinc-500">syncLogId</dt><dd className="break-all">{result.syncLogId ?? "-"}</dd></div>
+      </dl>
+      {result.failedItems.length > 0 ? (
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-red-700">
+          {result.failedItems.map((item) => (
+            <li key={`${item.outerItemId}-${item.title}`}>
+              {item.outerItemId} · {item.title}: {item.message}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 export function DataokeSyncPreviewForm() {
   const [state, formAction] = useActionState(
     previewDataokeProductsAction,
     initialState,
   );
+  const [importResult, setImportResult] = useState<DataokeImportResult | null>(
+    null,
+  );
+  const [isImporting, startImport] = useTransition();
+
+  function confirmImport() {
+    startImport(async () => {
+      const result = await confirmDataokeProductsImportAction(
+        state.productsPreview,
+        state.syncParams,
+      );
+
+      setImportResult(result);
+    });
+  }
 
   return (
     <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
@@ -189,6 +232,20 @@ export function DataokeSyncPreviewForm() {
 
       <StatusPanel state={state} />
       <SummaryPanel state={state} />
+      {state.productsPreview.length > 0 ? (
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <button
+            className="h-10 rounded-md bg-emerald-700 px-4 text-sm font-medium text-white transition-colors hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-zinc-400"
+            disabled={isImporting}
+            onClick={confirmImport}
+            type="button"
+          >
+            {isImporting ? "正在入库..." : "确认入库"}
+          </button>
+          <p className="text-sm text-zinc-600">第一版每次最多导入 10 条</p>
+        </div>
+      ) : null}
+      {importResult ? <ImportResultPanel result={importResult} /> : null}
       <ProductsPreviewTable state={state} />
     </section>
   );

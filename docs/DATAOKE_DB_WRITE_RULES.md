@@ -1,6 +1,32 @@
 # Dataoke 数据库写入规则
 
-本文档用于设计 Dataoke 商品入库规则，为下一步真正写入数据库做准备。本阶段只定义规则，不写数据库、不运行 migration、不修改 `prisma/schema.prisma`。
+## Implemented manual import rules
+
+The manual confirmation flow is implemented in
+`src/modules/dataoke-sync/dataoke-sync.service.ts` and is invoked only by the
+`/admin/dataoke-sync` Server Action.
+
+- An import refuses a preview containing more than 10 products with
+  `Cannot import more than 10 products at a time.`
+- `Product` is deduplicated by the schema-level unique key
+  `source + outerItemId`. Existing rows are updated; new rows are created.
+- If `isManualHidden` is true, import does not change the product status, so a
+  manually hidden product is never made active automatically.
+- If `isManualEdited` is true, import does not overwrite `title`,
+  `shortTitle`, or `description`.
+- If `manualCategoryLocked` is true, import does not overwrite `categoryId`,
+  `categorySlug`, or `categoryName`.
+- A failed row does not stop the remaining rows. The returned failed item has
+  only `outerItemId`, `title`, and a safe message.
+- Each confirmation creates and completes a `SyncLog` with `source=dataoke`,
+  `taskType=import_products`, `status`, safe filter params, timestamps, total,
+  success/create/update/skip/failure counts, and a safe message. It never
+  stores `appSecret`, `signRan`, `pid`, or a full request URL.
+
+The public storefront remains decoupled from Dataoke; it does not read the
+Dataoke API directly.
+
+本文档用于说明 Dataoke 商品入库规则。当前已实现后台手动确认入库；本次不新增 migration，也不修改 `prisma/schema.prisma`。
 
 ## Prisma Schema 检查
 

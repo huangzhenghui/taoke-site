@@ -1,9 +1,11 @@
 export type {
   DataokeImportFailure,
+  DataokeImportPreview,
   DataokeImportPreviewItem,
   DataokeImportResult,
-  DataokeImportSummary,
+  DataokeSyncParams,
 } from "./dataoke-sync.types";
+export { importDataokeProducts } from "./dataoke-sync.service";
 export type {
   DataokeProductSchemaPlan,
   DataokePromotionLinkSchemaPlan,

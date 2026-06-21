@@ -6,7 +6,15 @@ import {
   dataokeEndpoints,
   extractDataokeSearchResult,
   mapDataokeProductToProduct,
+  normalizeDataokeImageUrl,
 } from "@/integrations/dataoke";
+import type { DataokeRawProduct } from "@/integrations/dataoke";
+import {
+  importDataokeProducts,
+  type DataokeImportPreview,
+  type DataokeImportResult,
+  type DataokeSyncParams,
+} from "@/modules/dataoke-sync";
 import type { Product } from "@/modules/product";
 
 type DataokeSyncSummary = {
@@ -17,31 +25,14 @@ type DataokeSyncSummary = {
   totalNum?: number;
 };
 
-type DataokeProductPreview = Pick<
-  Product,
-  | "categoryId"
-  | "categoryName"
-  | "categorySlug"
-  | "commissionRate"
-  | "couponAmount"
-  | "finalPrice"
-  | "id"
-  | "mainImage"
-  | "outerItemId"
-  | "platform"
-  | "price"
-  | "shopName"
-  | "shortTitle"
-  | "source"
-  | "status"
-  | "title"
->;
+type DataokeProductPreview = DataokeImportPreview;
 
 export type DataokeSyncPreviewState = {
   message: string;
   productsPreview: DataokeProductPreview[];
   success: boolean;
   summary: DataokeSyncSummary | null;
+  syncParams: DataokeSyncParams | null;
 };
 
 function getStringValue(formData: FormData, key: string) {
@@ -74,24 +65,63 @@ function getLimitedPageSize(formData: FormData) {
   return Math.min(Math.max(Math.trunc(pageSize), 1), 10);
 }
 
-function toProductPreview(product: Product): DataokeProductPreview {
+function toNumberValue(value: string | number | undefined) {
+  const numberValue = Number(value);
+
+  return Number.isFinite(numberValue) ? numberValue : undefined;
+}
+
+function toStringValue(value: string | number | undefined) {
+  return value === undefined || value === null ? undefined : String(value);
+}
+
+function toProductPreview(
+  product: Product,
+  raw: DataokeRawProduct,
+): DataokeProductPreview {
+  const sourceCid = toStringValue(raw.cid);
+  const sourceSubcid = toStringValue(raw.subcid);
+  const couponTotalNum = toNumberValue(raw.couponTotalNum);
+  const couponReceiveNum = toNumberValue(raw.couponReceiveNum);
+
   return {
+    brandId: toStringValue(raw.brandId),
+    brandName: raw.brandName,
     categoryId: product.categoryId,
     categoryName: product.categoryName,
     categorySlug: product.categorySlug,
     commissionRate: product.commissionRate,
     couponAmount: product.couponAmount,
+    couponConditions: raw.couponConditions,
+    couponEndTime: raw.couponEndTime,
+    couponReceiveNum,
+    couponRemainCount: couponTotalNum !== undefined
+      ? Math.max(
+          couponTotalNum - (couponReceiveNum ?? 0),
+          0,
+        )
+      : undefined,
+    couponStartTime: raw.couponStartTime,
+    couponTotalNum,
+    dailySales: toNumberValue(raw.dailySales),
+    description: product.description,
     finalPrice: product.finalPrice,
     id: product.id,
+    images: product.mainImage ? [product.mainImage] : [],
     mainImage: product.mainImage,
+    monthSales: toNumberValue(raw.monthSales),
     outerItemId: product.outerItemId,
     platform: product.platform,
     price: product.price,
+    shopLogo: normalizeDataokeImageUrl(raw.shopLogo),
     shopName: product.shopName,
     shortTitle: product.shortTitle,
     source: product.source,
+    sourceCid,
+    sourceSubcid,
     status: product.status,
     title: product.title,
+    twoHoursSales: toNumberValue(raw.twoHoursSales),
   };
 }
 
@@ -101,6 +131,7 @@ function toErrorState(message: string): DataokeSyncPreviewState {
     productsPreview: [],
     success: false,
     summary: null,
+    syncParams: null,
   };
 }
 
@@ -133,10 +164,22 @@ export async function previewDataokeProductsAction(
         sort: getStringValue(formData, "sort") ?? "0",
       },
     );
+    const syncParams: DataokeSyncParams = {
+      cids: getStringValue(formData, "cids"),
+      commissionRateLowerLimit:
+        getNumberValue(formData, "commissionRateLowerLimit") ?? 5,
+      hasCoupon: getNumberValue(formData, "hasCoupon") ?? 1,
+      keyWords: getStringValue(formData, "keyWords") ?? "digital",
+      monthSalesLowerLimit:
+        getNumberValue(formData, "monthSalesLowerLimit") ?? 100,
+      pageId: getStringValue(formData, "pageId") ?? "1",
+      pageSize: getLimitedPageSize(formData),
+      sort: getStringValue(formData, "sort") ?? "0",
+    };
     const result = extractDataokeSearchResult(response);
-    const productsPreview = result.list
-      .map(mapDataokeProductToProduct)
-      .map(toProductPreview);
+    const productsPreview = result.list.map((raw) =>
+      toProductPreview(mapDataokeProductToProduct(raw), raw),
+    );
 
     return {
       message: "Dataoke product sync preview completed.",
@@ -149,6 +192,7 @@ export async function previewDataokeProductsAction(
         pageId: result.pageId,
         totalNum: result.totalNum,
       },
+      syncParams,
     };
   } catch (error) {
     return toErrorState(
@@ -156,5 +200,28 @@ export async function previewDataokeProductsAction(
         ? error.message
         : "Dataoke product sync preview failed.",
     );
+  }
+}
+
+export async function confirmDataokeProductsImportAction(
+  productsPreview: DataokeImportPreview[],
+  syncParams?: DataokeSyncParams | null,
+): Promise<DataokeImportResult> {
+  try {
+    return await importDataokeProducts({
+      productsPreview,
+      syncParams: syncParams ?? undefined,
+    });
+  } catch {
+    return {
+      createdCount: 0,
+      failedCount: 0,
+      failedItems: [],
+      message: "Dataoke product import could not be completed.",
+      skippedCount: 0,
+      success: false,
+      syncLogId: null,
+      updatedCount: 0,
+    };
   }
 }

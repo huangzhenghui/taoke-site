@@ -1,5 +1,24 @@
 # 大淘客 Dataoke 接入说明
 
+## Manual database import (implemented)
+
+`/admin/dataoke-sync` now supports a second, explicit step after a successful
+preview: **确认入库**. The button is visible only when preview products exist.
+It calls a Server Action and never lets the browser access Prisma or the
+Dataoke API directly.
+
+- Version 1 imports at most 10 previewed products per confirmation.
+- The import is manual only; there is no scheduled or automatic sync task.
+- Product identity is the database unique key `source + outerItemId`.
+  A missing product is created and an existing product is updated.
+- Every confirmation writes a `SyncLog` with safe request filters, counts,
+  status, timestamps, and a safe result message.
+- Logs do not persist `appSecret`, `signRan`, `pid`, or a complete request URL.
+- The public storefront still does not request the Dataoke API directly.
+
+The current `/admin/products` page remains mock-backed. Switching that list to
+PostgreSQL is a separate follow-up task.
+
 当前 `src/integrations/dataoke` 是大淘客 API 接入骨架，只用于为后续联调预留结构。
 项目页面仍然读取 mock service，不会直接调用大淘客真实接口。
 
