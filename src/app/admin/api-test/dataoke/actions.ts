@@ -5,6 +5,7 @@ import {
   DataokeClientError,
   dataokeConfig,
   dataokeEndpoints,
+  extractDataokeSearchResult,
   mapDataokePrivilegeLinkToPromotionLink,
   mapDataokeProductToProduct,
   mapDataokeSuperCategoryToCategory,
@@ -18,6 +19,7 @@ import type {
   DataokeSafeErrorSummary,
   DataokeSafeRequestSummary,
   DataokeSuperCategory,
+  ExtractedDataokeSearchResult,
 } from "@/integrations/dataoke";
 import type { Category } from "@/modules/category";
 import type { Product } from "@/modules/product";
@@ -97,13 +99,6 @@ type DataokeSearchCandidate = {
   outerItemId: string;
   shopName: string;
   title: string;
-};
-
-type ExtractedDataokeSearchResult = {
-  detectedPath: string;
-  list: DataokeRawProduct[];
-  pageId?: string;
-  totalNum?: number;
 };
 
 export type DataokeTestActionState = {
@@ -216,22 +211,6 @@ function getPathValue(value: unknown, path: string[]) {
   }, value);
 }
 
-function getStringFieldValue(record: Record<string, unknown>, key: string) {
-  const value = record[key];
-
-  if (value === undefined || value === null || value === "") {
-    return undefined;
-  }
-
-  return String(value);
-}
-
-function getNumberFieldValue(record: Record<string, unknown>, key: string) {
-  const value = Number(record[key]);
-
-  return Number.isFinite(value) ? value : undefined;
-}
-
 function getFirstStringAtPaths(raw: unknown, paths: string[][]) {
   for (const path of paths) {
     const value = getPathValue(raw, path);
@@ -254,51 +233,6 @@ function getFirstNumberAtPaths(raw: unknown, paths: string[][]) {
   }
 
   return undefined;
-}
-
-function getSearchResultFromContainer(
-  container: unknown,
-): Omit<ExtractedDataokeSearchResult, "detectedPath"> | null {
-  if (!isRecord(container) || !Array.isArray(container.list)) {
-    return null;
-  }
-
-  return {
-    list: container.list.filter(isRecord) as DataokeRawProduct[],
-    pageId: getStringFieldValue(container, "pageId"),
-    totalNum: getNumberFieldValue(container, "totalNum"),
-  };
-}
-
-function extractDataokeSearchResult(raw: unknown): ExtractedDataokeSearchResult {
-  const candidates = [
-    { path: ["data", "data"], detectedPath: "raw.data.data.list" },
-    { path: ["data"], detectedPath: "raw.data.list" },
-    {
-      path: ["data", "data", "data"],
-      detectedPath: "raw.data.data.data.list",
-    },
-    { path: ["result"], detectedPath: "raw.result.list" },
-    { path: [], detectedPath: "raw.list" },
-  ];
-
-  for (const candidate of candidates) {
-    const result = getSearchResultFromContainer(
-      getPathValue(raw, candidate.path),
-    );
-
-    if (result) {
-      return {
-        ...result,
-        detectedPath: candidate.detectedPath,
-      };
-    }
-  }
-
-  return {
-    detectedPath: "not_found",
-    list: [],
-  };
 }
 
 function toCandidateString(value: unknown) {
@@ -527,12 +461,12 @@ export async function testDataokeSearchAction(
       dataokeEndpoints.searchGoods.path,
       dataokeConfig.searchVersion,
       {
-      cids: getStringValue(formData, "cids"),
-      hasCoupon: getNumberValue(formData, "hasCoupon") ?? 1,
-      keyWords: getStringValue(formData, "keyWords"),
-      pageId: getStringValue(formData, "pageId") ?? "1",
-      pageSize: getLimitedPageSize(formData),
-      sort: getStringValue(formData, "sort"),
+        cids: getStringValue(formData, "cids"),
+        hasCoupon: getNumberValue(formData, "hasCoupon") ?? 1,
+        keyWords: getStringValue(formData, "keyWords"),
+        pageId: getStringValue(formData, "pageId") ?? "1",
+        pageSize: getLimitedPageSize(formData),
+        sort: getStringValue(formData, "sort"),
       },
     );
 

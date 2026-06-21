@@ -263,6 +263,36 @@ Dataoke 原始字段不能直接进入页面。接口返回必须先经过 mappe
 - 评估是否把 `/go/[productId]` 切到数据库或实时转链策略。
 - 增加失败重试、限流、过期链接刷新策略。
 
+## Dataoke 同步预览
+
+Dataoke 三个核心接口已经完成后台真实联调：
+
+1. 搜索接口 `/api/goods/get-dtk-search-goods`
+2. 超级分类接口 `/api/category/get-super-category`
+3. 高效转链接口 `/api/tb-service/get-privilege-link`
+
+下一阶段先做同步预览，不直接写数据库。后台同步预览页面路径：
+
+- `/admin/dataoke-sync`
+
+同步预览的作用：
+
+- 从大淘客搜索接口拉取商品列表。
+- 使用 `extractDataokeSearchResult` 兼容多层 `data` 返回结构。
+- 使用 `mapDataokeProductToProduct` 映射成内部 `Product`。
+- 只展示将来如果入库会保存的安全字段。
+- `pageSize` 服务端强制最大为 `10`，避免首次预览拉取过多数据。
+
+同步预览不会：
+
+- 写入 PostgreSQL。
+- 修改 Prisma schema。
+- 影响前台页面。
+- 让前台页面直接请求 Dataoke。
+- 展示完整原始响应、完整请求 URL、完整 `signRan`、`appKey`、`appSecret` 或 `pid`。
+
+预览确认字段无误后，下一阶段再做数据库写入：先定义导入策略和去重规则，再接 Prisma 写入，最后才考虑后台列表切换数据库读取。当前前台页面仍然读取本地 mock/service 数据，不直接请求 Dataoke。
+
 ## 搜索结果结构兼容
 
 搜索接口真实请求成功后，返回结构可能存在多层 `data` 嵌套。页面和 Server Action 不能写死 `raw.data.data.list`，否则会出现接口返回 `msg=ok`，但映射商品为空的问题。

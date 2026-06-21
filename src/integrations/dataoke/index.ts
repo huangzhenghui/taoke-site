@@ -1,5 +1,6 @@
 export { dataokeConfig } from "./dataoke.config";
 export { dataokeEndpoints } from "./dataoke.endpoints";
+export { extractDataokeSearchResult } from "./dataoke.extractor";
 export {
   DataokeClient,
   DataokeClientError,
@@ -18,6 +19,7 @@ export {
   createDataokeTimer,
 } from "./dataoke.sign";
 export type { DataokeEndpointConfig } from "./dataoke.endpoints";
+export type { ExtractedDataokeSearchResult } from "./dataoke.extractor";
 export type {
   DataokeRequestParams,
   DataokeSafeErrorSummary,
