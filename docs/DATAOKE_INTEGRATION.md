@@ -18,11 +18,13 @@ Dataoke API directly.
 
 `/admin/products` now reads imported `Product` rows from PostgreSQL for
 administrative inspection. It supports title/short-title/external-ID search
-and source/status filters. Public pages still use their existing mock-backed
-data flow and do not read the database or Dataoke API directly.
+and source/status filters. `/admin/sync-logs` now reads `SyncLog` records for
+Dataoke import tracking, with source/task-type/status filters and display-layer
+redaction of sensitive log content. Public pages still use their existing
+mock-backed data flow and do not read the database or Dataoke API directly.
 
 Suggested next steps: make the admin product detail/edit pages database-backed,
-or add an admin list for `SyncLog` records.
+or add more detailed, safely redacted Dataoke import failure records.
 
 当前 `src/integrations/dataoke` 是大淘客 API 接入骨架，只用于为后续联调预留结构。
 项目页面仍然读取 mock service，不会直接调用大淘客真实接口。
