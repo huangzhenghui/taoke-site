@@ -23,7 +23,29 @@ export function SiteHeader() {
           </p>
         </div>
 
-        <nav aria-label="站点导航" className="flex flex-wrap items-center gap-2 text-sm">
+        <form
+          action="/search"
+          className="flex w-full max-w-xl gap-2"
+          method="GET"
+        >
+          <input
+            className="min-w-0 flex-1 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-400"
+            name="q"
+            placeholder="搜索商品、文章或专题"
+            type="search"
+          />
+          <button
+            className="rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+            type="submit"
+          >
+            搜索
+          </button>
+        </form>
+
+        <nav
+          aria-label="站点导航"
+          className="flex flex-wrap items-center gap-2 text-sm"
+        >
           <Link
             className="rounded-md bg-zinc-950 px-3 py-2 font-medium text-white"
             href="/"
