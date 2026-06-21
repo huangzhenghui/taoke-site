@@ -1,6 +1,7 @@
 import type { Prisma } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { resolveCategoryMappingForSource } from "@/modules/category-mapping";
 
 import type {
   DataokeImportPreview,
@@ -145,6 +146,45 @@ function getProductData(item: DataokeImportPreview) {
   };
 }
 
+async function resolveProductCategory(
+  item: DataokeImportPreview,
+  source: string,
+  existingCategoryName?: string | null,
+) {
+  const categoryId = asOptionalString(item.categoryId);
+  const categorySlug = asOptionalString(item.categorySlug);
+  const categoryName = asOptionalString(item.categoryName);
+
+  if (source !== "dataoke") {
+    return { categoryId, categoryName, categorySlug };
+  }
+
+  const sourceCid = asTrimmedString(item.sourceCid);
+  const sourceSubcid = asOptionalString(item.sourceSubcid);
+  const fallbackKey = sourceCid || asTrimmedString(item.categoryId);
+  const fallbackCategory = {
+    categoryId: fallbackKey ? `dataoke-${fallbackKey}` : categoryId,
+    categoryName: categoryName ?? "大淘客分类",
+    categorySlug: fallbackKey ? `dataoke-${fallbackKey}` : categorySlug,
+  };
+  const mapping = await resolveCategoryMappingForSource({
+    source,
+    sourceCid,
+    sourceSubcid,
+  });
+
+  if (!mapping) {
+    return fallbackCategory;
+  }
+
+  return {
+    categoryId: mapping.categoryId,
+    categoryName:
+      mapping.sourceName ?? existingCategoryName ?? fallbackCategory.categoryName,
+    categorySlug: mapping.categorySlug,
+  };
+}
+
 /** Manually imports at most ten already-previewed Dataoke products. */
 export async function importDataokeProducts({
   productsPreview,
@@ -218,15 +258,20 @@ export async function importDataokeProducts({
         where: { source_outerItemId: { outerItemId, source } },
       });
       const data = getProductData(item);
+      const category = await resolveProductCategory(
+        item,
+        source,
+        existing?.categoryName,
+      );
       const now = new Date();
 
       if (!existing) {
         await prisma.product.create({
           data: {
             ...data,
-            categoryId: asOptionalString(item.categoryId),
-            categoryName: asOptionalString(item.categoryName),
-            categorySlug: asOptionalString(item.categorySlug),
+            categoryId: category.categoryId,
+            categoryName: category.categoryName,
+            categorySlug: category.categorySlug,
             lastSyncedAt: now,
             outerItemId,
             source,
@@ -273,9 +318,9 @@ export async function importDataokeProducts({
           ...(existing.manualCategoryLocked
             ? {}
             : {
-                categoryId: asOptionalString(item.categoryId),
-                categoryName: asOptionalString(item.categoryName),
-                categorySlug: asOptionalString(item.categorySlug),
+                categoryId: category.categoryId,
+                categoryName: category.categoryName,
+                categorySlug: category.categorySlug,
               }),
         },
       });

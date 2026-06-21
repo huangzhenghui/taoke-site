@@ -10,6 +10,15 @@ export type AdminCategoryMappingsDbQuery = {
   status?: string;
 };
 
+export type SourceCategoryMappingResolution = {
+  categoryId: string;
+  categorySlug: string;
+  confidence: string;
+  sourceName: string | null;
+  sourceSubName: string | null;
+  status: string;
+};
+
 const DEFAULT_PAGE_SIZE = 20;
 const MAX_PAGE_SIZE = 50;
 
@@ -25,6 +34,63 @@ function getOptionalFilter(value: string | undefined) {
   const normalizedValue = value?.trim();
 
   return normalizedValue && normalizedValue !== "all" ? normalizedValue : undefined;
+}
+
+/**
+ * Resolves an active external category mapping. A specific subcategory wins;
+ * an empty or null subcategory mapping is the source-category fallback.
+ */
+export async function resolveCategoryMappingForSource({
+  source,
+  sourceCid,
+  sourceSubcid,
+}: {
+  source: string;
+  sourceCid: string;
+  sourceSubcid?: string | null;
+}): Promise<SourceCategoryMappingResolution | null> {
+  const normalizedSource = source.trim();
+  const normalizedSourceCid = sourceCid.trim();
+  const normalizedSourceSubcid = sourceSubcid?.trim();
+  const select = {
+    categoryId: true,
+    categorySlug: true,
+    confidence: true,
+    sourceName: true,
+    sourceSubName: true,
+    status: true,
+  } as const;
+
+  if (!normalizedSource || !normalizedSourceCid) {
+    return null;
+  }
+
+  if (normalizedSourceSubcid) {
+    const exactMapping = await prisma.sourceCategoryMapping.findFirst({
+      select,
+      where: {
+        source: normalizedSource,
+        sourceCid: normalizedSourceCid,
+        sourceSubcid: normalizedSourceSubcid,
+        status: "active",
+      },
+    });
+
+    if (exactMapping) {
+      return exactMapping;
+    }
+  }
+
+  return prisma.sourceCategoryMapping.findFirst({
+    select,
+    where: {
+      source: normalizedSource,
+      sourceCid: normalizedSourceCid,
+      status: "active",
+      OR: [{ sourceSubcid: "" }, { sourceSubcid: null }],
+    },
+    orderBy: { updatedAt: "desc" },
+  });
 }
 
 /** Reads external-to-internal category mappings for the admin list only. */

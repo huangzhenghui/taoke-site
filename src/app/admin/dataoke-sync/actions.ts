@@ -9,6 +9,7 @@ import {
   normalizeDataokeImageUrl,
 } from "@/integrations/dataoke";
 import type { DataokeRawProduct } from "@/integrations/dataoke";
+import { resolveCategoryMappingForSource } from "@/modules/category-mapping";
 import {
   importDataokeProducts,
   type DataokeImportPreview,
@@ -75,21 +76,27 @@ function toStringValue(value: string | number | undefined) {
   return value === undefined || value === null ? undefined : String(value);
 }
 
-function toProductPreview(
+async function toProductPreview(
   product: Product,
   raw: DataokeRawProduct,
-): DataokeProductPreview {
+): Promise<DataokeProductPreview> {
   const sourceCid = toStringValue(raw.cid);
   const sourceSubcid = toStringValue(raw.subcid);
   const couponTotalNum = toNumberValue(raw.couponTotalNum);
   const couponReceiveNum = toNumberValue(raw.couponReceiveNum);
+  const fallbackKey = sourceCid || product.categoryId;
+  const mapping = await resolveCategoryMappingForSource({
+    source: product.source,
+    sourceCid: sourceCid ?? "",
+    sourceSubcid,
+  });
 
   return {
     brandId: toStringValue(raw.brandId),
     brandName: raw.brandName,
-    categoryId: product.categoryId,
-    categoryName: product.categoryName,
-    categorySlug: product.categorySlug,
+    categoryId: mapping?.categoryId ?? `dataoke-${fallbackKey}`,
+    categoryName: mapping?.sourceName ?? product.categoryName ?? "大淘客分类",
+    categorySlug: mapping?.categorySlug ?? `dataoke-${fallbackKey}`,
     commissionRate: product.commissionRate,
     couponAmount: product.couponAmount,
     couponConditions: raw.couponConditions,
@@ -177,8 +184,10 @@ export async function previewDataokeProductsAction(
       sort: getStringValue(formData, "sort") ?? "0",
     };
     const result = extractDataokeSearchResult(response);
-    const productsPreview = result.list.map((raw) =>
-      toProductPreview(mapDataokeProductToProduct(raw), raw),
+    const productsPreview = await Promise.all(
+      result.list.map((raw) =>
+        toProductPreview(mapDataokeProductToProduct(raw), raw),
+      ),
     );
 
     return {

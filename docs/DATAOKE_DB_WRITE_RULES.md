@@ -26,6 +26,20 @@ The manual confirmation flow is implemented in
 The public storefront remains decoupled from Dataoke; it does not read the
 Dataoke API directly.
 
+### Category mapping resolution
+
+Before Dataoke creates or updates a `Product`, it resolves an active
+`SourceCategoryMapping` by `source + sourceCid + sourceSubcid` first, then by
+`source + sourceCid` with an empty or null `sourceSubcid`. A matching mapping
+supplies `categoryId` and `categorySlug`; its `sourceName` supplies
+`categoryName` when available. If no mapping matches, the importer falls back
+to `categoryId=dataoke-{cid}` and `categorySlug=dataoke-{cid}`.
+
+An existing Product with `manualCategoryLocked=true` retains its current
+`categoryId`, `categorySlug`, and `categoryName` regardless of the resolved
+mapping. The Dataoke preview applies the same resolution, so the proposed
+category is visible before confirmation.
+
 本文档用于说明 Dataoke 商品入库规则。当前已实现后台手动确认入库；本次不新增 migration，也不修改 `prisma/schema.prisma`。
 
 ## Prisma Schema 检查

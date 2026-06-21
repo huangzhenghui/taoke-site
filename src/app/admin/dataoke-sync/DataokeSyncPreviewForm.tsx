@@ -232,6 +232,9 @@ export function DataokeSyncPreviewForm() {
 
       <StatusPanel state={state} />
       <SummaryPanel state={state} />
+      <p className="mt-4 rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900">
+        分类会优先使用 /admin/category-mappings 中的 SourceCategoryMapping；未配置映射时 fallback 为 dataoke-{'{'}cid{'}'}。
+      </p>
       {state.productsPreview.length > 0 ? (
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <button

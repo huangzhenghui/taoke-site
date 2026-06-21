@@ -33,6 +33,12 @@ mappings without calling the Dataoke API. A Dataoke `cid` must not become a
 long-term SEO category slug directly; future imports should resolve `cid` and
 `subcid` through `SourceCategoryMapping` before setting `categorySlug`.
 
+Dataoke preview and manual import now resolve active mappings in this order:
+`source + cid + subcid`, then `source + cid` with an empty or null `subcid`.
+When no mapping exists, both use `dataoke-{cid}` as the category ID and slug
+fallback. Existing products with `manualCategoryLocked=true` retain their
+manually assigned category fields.
+
 当前 `src/integrations/dataoke` 是大淘客 API 接入骨架，只用于为后续联调预留结构。
 项目页面仍然读取 mock service，不会直接调用大淘客真实接口。
 
