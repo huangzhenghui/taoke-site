@@ -34,7 +34,7 @@ export function ArticleForm({
         <AdminPageHeader description={description} title={title} />
 
         <p className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          当前为后台表单骨架，暂未接入数据库保存功能。
+          当前为后台表单骨架，Server Actions 入口已预留，暂未接入数据库保存功能。
         </p>
 
         <form className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
