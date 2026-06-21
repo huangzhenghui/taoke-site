@@ -63,6 +63,14 @@ products and returns zero skipped items. `goodsId` is always the stored
 `Product.outerItemId`; `couponId` is optional and an empty coupon ID is never a
 reason to skip a product.
 
+The homepage product module now reads display-safe active Products from the
+local database first. It never requests the Dataoke API directly, and falls
+back to mock products only when the database query returns no eligible rows.
+Product detail, category, search, article, and topic pages remain on their
+existing data sources. Suggested next steps are reading a database
+`PromotionLink` in `/go/[productId]` or making the product detail page
+database-backed.
+
 当前 `src/integrations/dataoke` 是大淘客 API 接入骨架，只用于为后续联调预留结构。
 项目页面仍然读取 mock service，不会直接调用大淘客真实接口。
 

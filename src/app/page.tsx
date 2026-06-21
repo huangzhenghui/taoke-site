@@ -2,12 +2,15 @@ import { ArticleCard } from "@/components/article/ArticleCard";
 import { ProductCard } from "@/components/product/ProductCard";
 import { SeoPageCard } from "@/components/seo/SeoPageCard";
 import { getAllArticles } from "@/modules/article";
-import { getAllProducts } from "@/modules/product";
+import { getAllProducts, getHomeProductsFromDb } from "@/modules/product";
 import { getAllSeoPages } from "@/modules/seo-page";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
   const articles = getAllArticles();
-  const products = getAllProducts();
+  const databaseProducts = await getHomeProductsFromDb();
+  const products = databaseProducts.length > 0 ? databaseProducts : getAllProducts();
   const seoPages = getAllSeoPages();
 
   return (
@@ -21,7 +24,7 @@ export default function Home() {
                 今日值得关注的导购内容
               </h1>
               <p className="text-base leading-7 text-zinc-600">
-                当前页面读取本地 mock 文章和商品数据，用于验证导购内容站首页骨架。
+                首页商品优先读取本地数据库；文章与专题仍使用现有内容数据源。
               </p>
             </div>
             <div className="rounded-md border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600">
@@ -67,9 +70,9 @@ export default function Home() {
 
         <section className="space-y-4">
           <div>
-            <h2 className="text-2xl font-semibold text-zinc-950">优惠商品</h2>
+            <h2 className="text-2xl font-semibold text-zinc-950">精选优惠商品</h2>
             <p className="mt-2 text-sm leading-6 text-zinc-600">
-              展示当前 mock 商品池中的优惠信息，后续可接入后台配置和淘客接口数据。
+              展示本地数据库中已审核的优惠商品；数据库暂无商品时使用开发期备选数据。
             </p>
           </div>
           <div

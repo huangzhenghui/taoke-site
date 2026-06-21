@@ -8,7 +8,12 @@ export {
   searchProductsByKeyword,
 } from "./product.service";
 export { getAdminProductsFromDb } from "./product-db.service";
+export {
+  getHomeProductsFromDb,
+  mapDbProductToProductCardItem,
+} from "./product-public-db.service";
 export type { AdminProductsDbQuery } from "./product-db.service";
+export type { HomeProductsDbQuery } from "./product-public-db.service";
 export type {
   AdminProductWithQualityIssues,
   ProductQualityIssue,
