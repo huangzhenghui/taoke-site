@@ -436,3 +436,99 @@
 - 第一版入库限制为最多 10 条。
 - 第一版只做后台手动触发，不做自动全量同步。
 - 前台切换数据库读取必须单独设计，不要和 Dataoke 写入混在同一次任务中。
+
+## 第一版 Schema 改造落地记录
+
+当前 `prisma/schema.prisma` 已完成 Dataoke 第一版入库所需的 schema 改造，但尚未执行 migration，尚未写入数据库。
+
+已经落地的模型：
+
+- `Product`
+- `Category`
+- `PromotionLink`
+- `SourceCategoryMapping`
+- `SyncLog`
+
+### Product 已落地内容
+
+`Product` 已支持：
+
+- Dataoke 识别字段：`source`、`outerItemId`、`dataokeId`、`goodsSign`
+- 商品内容字段：`title`、`shortTitle`、`description`、`mainImage`、`images`
+- 平台和店铺字段：`platform`、`shopName`、`shopLogo`、`brandName`、`brandId`
+- 价格、优惠和佣金字段：`price`、`finalPrice`、`couponAmount`、`couponConditions`、`commissionRate`
+- 销量字段：`monthSales`、`dailySales`、`twoHoursSales`
+- 优惠券时间和数量字段：`couponStartTime`、`couponEndTime`、`couponTotalNum`、`couponReceiveNum`、`couponRemainCount`
+- 分类字段：`categoryId`、`categorySlug`、`categoryName`、`sourceCid`、`sourceSubcid`
+- 人工保护字段：`isManualHidden`、`isManualEdited`、`manualCategoryLocked`
+- 同步字段：`lastSyncedAt`
+- 与 `PromotionLink` 的一对多关系：`promotionLinks`
+
+已落地唯一约束：
+
+```prisma
+@@unique([source, outerItemId])
+```
+
+### PromotionLink 已落地内容
+
+`PromotionLink` 已支持：
+
+- 与 Product 的关系：`product Product @relation(fields: [productId], references: [id])`
+- 转链字段：`promotionUrl`、`couponUrl`、`shortUrl`、`tpwd`、`longTpwd`
+- 佣金和价格快照：`maxCommissionRate`、`minCommissionRate`、`originalPrice`、`actualPrice`
+- 优惠券快照：`couponStartTime`、`couponEndTime`、`couponInfo`、`couponTotalCount`、`couponRemainCount`
+- 生命周期字段：`lastGeneratedAt`、`expiresAt`、`status`
+
+已落地唯一约束：
+
+```prisma
+@@unique([productId, source])
+```
+
+### SourceCategoryMapping 已落地内容
+
+已新增 `SourceCategoryMapping`，用于把 Dataoke `cid` / `subcid` 映射到站内分类。
+
+已落地唯一约束：
+
+```prisma
+@@unique([source, sourceCid, sourceSubcid])
+```
+
+### SyncLog 已落地内容
+
+`SyncLog` 已支持：
+
+- `params Json?`
+- `createdCount`
+- `updatedCount`
+- `skippedCount`
+- `errorSummary`
+- 各 count 字段默认值为 `0`
+
+日志仍必须脱敏，不能保存 `appSecret`、`signRan`、完整请求 URL 或 `pid`。
+
+### 本次暂缓模型
+
+以下模型本次没有新增：
+
+- `ProductMetrics`
+- `ProductSnapshot`
+- `SeoContent`
+- `SyncFailure`
+
+暂缓原因：
+
+- `ProductMetrics`：第一版同步量限制为 10 条，动态指标可以先放在 Product 上，等同步频率提升后再拆表。
+- `ProductSnapshot`：历史快照会显著增加写入量和查询复杂度，等价格走势或历史分析需求明确后再做。
+- `SeoContent`：当前先用 `isManualEdited`、`isManualHidden`、`manualCategoryLocked` 做基础保护，后续 SEO 编辑能力成熟后再拆。
+- `SyncFailure`：第一版失败摘要可先放在 `SyncLog.errorSummary`，等需要逐条失败重试时再拆。
+
+下一步才做：
+
+- 创建 migration。
+- 执行本地数据库迁移。
+- 重新生成 Prisma Client。
+- 实现确认入库 Server Action。
+- 在 `/admin/dataoke-sync` 增加“确认入库”按钮。

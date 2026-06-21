@@ -71,7 +71,7 @@ export type DataokePromotionLinkSchemaPlan = {
 export type DataokeSourceCategoryMappingSchemaPlan = {
   categoryId: string;
   categorySlug: string;
-  confidence?: number;
+  confidence: string;
   createdAt: string;
   id: string;
   source: string;

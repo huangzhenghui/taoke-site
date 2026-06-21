@@ -11,10 +11,10 @@ model Category {
   id             String   @id @default(cuid())
   slug           String   @unique
   name           String
-  description    String
-  seoTitle       String
-  seoDescription String
-  sortOrder      Int
+  description    String?
+  seoTitle       String?
+  seoDescription String?
+  sortOrder      Int      @default(0)
   status         String
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -24,33 +24,58 @@ model Category {
 }
 
 model Product {
-  id             String   @id @default(cuid())
-  platform       String
-  source         String
-  outerItemId    String
-  title          String
-  shortTitle     String
-  description    String
-  mainImage      String
-  price          Decimal  @db.Decimal(12, 2)
-  finalPrice     Decimal  @db.Decimal(12, 2)
-  couponAmount   Decimal  @db.Decimal(12, 2)
-  commissionRate Decimal  @db.Decimal(6, 2)
-  shopName       String
-  categoryId     String
-  categorySlug   String
-  categoryName   String
-  promotionUrl   String
-  couponUrl      String
-  status         String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                   String          @id @default(cuid())
+  source               String
+  outerItemId          String
+  dataokeId            String?
+  goodsSign            String?
+  title                String
+  shortTitle           String?
+  description          String?
+  mainImage            String?
+  images               Json?
+  platform             String
+  shopName             String?
+  shopLogo             String?
+  brandName            String?
+  brandId              String?
+  price                Decimal?        @db.Decimal(12, 2)
+  finalPrice           Decimal?        @db.Decimal(12, 2)
+  couponAmount         Decimal?        @db.Decimal(12, 2)
+  couponConditions     String?
+  commissionRate       Decimal?        @db.Decimal(6, 2)
+  monthSales           Int?
+  dailySales           Int?
+  twoHoursSales        Int?
+  couponStartTime      DateTime?
+  couponEndTime        DateTime?
+  couponTotalNum       Int?
+  couponReceiveNum     Int?
+  couponRemainCount    Int?
+  categoryId           String?
+  categorySlug         String?
+  categoryName         String?
+  sourceCid            String?
+  sourceSubcid         String?
+  promotionUrl         String?
+  couponUrl            String?
+  status               String
+  isManualHidden       Boolean         @default(false)
+  isManualEdited       Boolean         @default(false)
+  manualCategoryLocked Boolean         @default(false)
+  lastSyncedAt         DateTime?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  promotionLinks       PromotionLink[]
 
-  @@unique([platform, outerItemId])
+  @@unique([source, outerItemId])
   @@index([categoryId])
   @@index([categorySlug])
   @@index([status])
   @@index([source])
+  @@index([sourceCid])
+  @@index([lastSyncedAt])
+  @@index([couponEndTime])
 }
 
 model Article {
@@ -95,23 +120,56 @@ model SeoPage {
 }
 
 model PromotionLink {
-  id                  String   @id @default(cuid())
-  productId           String
-  platform            String
-  source              String
-  outerItemId         String
-  promotionUrl        String
-  couponUrl           String
-  tpwd                String
-  raw                 Json?
-  promotionPositionId String
-  status              String
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                String    @id @default(cuid())
+  productId         String
+  source            String
+  outerItemId       String
+  platform          String
+  promotionUrl      String?
+  couponUrl         String?
+  shortUrl          String?
+  tpwd              String?
+  longTpwd          String?
+  maxCommissionRate Decimal?  @db.Decimal(6, 2)
+  minCommissionRate Decimal?  @db.Decimal(6, 2)
+  originalPrice     Decimal?  @db.Decimal(12, 2)
+  actualPrice       Decimal?  @db.Decimal(12, 2)
+  couponStartTime   DateTime?
+  couponEndTime     DateTime?
+  couponInfo        String?
+  couponTotalCount  Int?
+  couponRemainCount Int?
+  status            String
+  lastGeneratedAt   DateTime?
+  expiresAt         DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  product           Product   @relation(fields: [productId], references: [id])
 
-  @@index([productId])
-  @@index([platform, outerItemId])
+  @@unique([productId, source])
+  @@index([outerItemId])
   @@index([source])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model SourceCategoryMapping {
+  id            String   @id @default(cuid())
+  source        String
+  sourceCid     String
+  sourceSubcid  String?
+  sourceName    String?
+  sourceSubName String?
+  categoryId    String
+  categorySlug  String
+  confidence    String
+  status        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([source, sourceCid, sourceSubcid])
+  @@index([source])
+  @@index([categorySlug])
   @@index([status])
 }
 
@@ -133,12 +191,17 @@ model SyncLog {
   source       String
   taskType     String
   status       String
-  message      String?
-  totalCount   Int
-  successCount Int
-  failedCount  Int
+  params       Json?
   startedAt    DateTime
   finishedAt   DateTime?
+  totalCount   Int       @default(0)
+  successCount Int       @default(0)
+  createdCount Int       @default(0)
+  updatedCount Int       @default(0)
+  skippedCount Int       @default(0)
+  failedCount  Int       @default(0)
+  message      String?
+  errorSummary String?
   createdAt    DateTime  @default(now())
 
   @@index([source])
