@@ -1,6 +1,11 @@
 export type ProductPlatform = "taobao" | "tmall" | "jd" | "vip" | "other";
 
-export type ProductSource = "manual" | "qingtaoke" | "alimama" | "mock";
+export type ProductSource =
+  | "manual"
+  | "qingtaoke"
+  | "alimama"
+  | "dataoke"
+  | "mock";
 
 export type ProductStatus = "draft" | "active" | "inactive" | "expired";
 

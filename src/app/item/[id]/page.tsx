@@ -26,6 +26,7 @@ const platformLabels: Record<Product["platform"], string> = {
 
 const sourceLabels: Record<Product["source"], string> = {
   alimama: "阿里妈妈",
+  dataoke: "大淘客",
   manual: "手动录入",
   mock: "Mock 数据",
   qingtaoke: "轻淘客",
