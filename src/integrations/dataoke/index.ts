@@ -20,6 +20,8 @@ export {
 export type { DataokeEndpointConfig } from "./dataoke.endpoints";
 export type {
   DataokeRequestParams,
+  DataokeSafeErrorSummary,
+  DataokeSafeRequestSummary,
   DataokeSignedParams,
 } from "./dataoke.client";
 export type {

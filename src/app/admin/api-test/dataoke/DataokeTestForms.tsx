@@ -6,45 +6,120 @@ import {
   testDataokePrivilegeLinkAction,
   testDataokeSearchAction,
   testDataokeSuperCategoryAction,
+  type DataokeTestActionState,
 } from "./actions";
 
-type DataokeTestState = {
-  status: "idle" | "success" | "error";
-  message: string;
-  raw: unknown;
-  mapped: unknown;
-};
-
-const initialState: DataokeTestState = {
-  mapped: null,
+const initialState: DataokeTestActionState = {
+  mappedProducts: [],
   message: "尚未测试。",
-  raw: null,
-  status: "idle",
+  rawSummary: null,
+  safeErrorSummary: null,
+  safeRequestSummary: null,
+  success: false,
 };
 
-function ResultPanel({ state }: { state: DataokeTestState }) {
+function StatusPanel({ state }: { state: DataokeTestActionState }) {
   return (
     <div className="mt-4 grid gap-3 md:grid-cols-3">
       <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3">
-        <p className="text-xs font-medium text-zinc-500">当前测试状态</p>
-        <p className="mt-2 text-sm text-zinc-950">{state.status}</p>
+        <p className="text-xs font-medium text-zinc-500">success</p>
+        <p className="mt-2 text-sm text-zinc-950">
+          {state.success ? "true" : "false"}
+        </p>
       </div>
       <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 md:col-span-2">
-        <p className="text-xs font-medium text-zinc-500">错误信息</p>
+        <p className="text-xs font-medium text-zinc-500">message</p>
         <p className="mt-2 text-sm text-zinc-950">{state.message}</p>
       </div>
-      <div className="rounded-md border border-zinc-200 bg-white p-3 md:col-span-3">
-        <p className="text-xs font-medium text-zinc-500">原始返回 raw</p>
-        <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-all rounded bg-zinc-950 p-3 text-xs text-zinc-50">
-          {JSON.stringify(state.raw, null, 2)}
-        </pre>
-      </div>
-      <div className="rounded-md border border-zinc-200 bg-white p-3 md:col-span-3">
-        <p className="text-xs font-medium text-zinc-500">映射后的数据</p>
-        <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-all rounded bg-zinc-950 p-3 text-xs text-zinc-50">
-          {JSON.stringify(state.mapped, null, 2)}
-        </pre>
-      </div>
+    </div>
+  );
+}
+
+function RawSummaryPanel({ state }: { state: DataokeTestActionState }) {
+  return (
+    <div className="mt-4 rounded-md border border-zinc-200 bg-white p-3">
+      <p className="text-xs font-medium text-zinc-500">rawSummary</p>
+      <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-all rounded bg-zinc-950 p-3 text-xs text-zinc-50">
+        {JSON.stringify(state.rawSummary, null, 2)}
+      </pre>
+    </div>
+  );
+}
+
+function DiagnosticPanel({
+  label,
+  value,
+}: {
+  label: string;
+  value: unknown;
+}) {
+  return (
+    <div className="mt-4 rounded-md border border-zinc-200 bg-white p-3">
+      <p className="text-xs font-medium text-zinc-500">{label}</p>
+      <pre className="mt-2 max-h-52 overflow-auto whitespace-pre-wrap break-all rounded bg-zinc-950 p-3 text-xs text-zinc-50">
+        {JSON.stringify(value, null, 2)}
+      </pre>
+    </div>
+  );
+}
+
+function MappedProductsPanel({ state }: { state: DataokeTestActionState }) {
+  return (
+    <div className="mt-4 overflow-x-auto rounded-md border border-zinc-200 bg-white">
+      <table className="min-w-full divide-y divide-zinc-200 text-sm">
+        <thead className="bg-zinc-50 text-left text-zinc-500">
+          <tr>
+            <th className="px-3 py-2 font-medium">title</th>
+            <th className="px-3 py-2 font-medium">shortTitle</th>
+            <th className="px-3 py-2 font-medium">outerItemId</th>
+            <th className="px-3 py-2 font-medium">price</th>
+            <th className="px-3 py-2 font-medium">finalPrice</th>
+            <th className="px-3 py-2 font-medium">couponAmount</th>
+            <th className="px-3 py-2 font-medium">commissionRate</th>
+            <th className="px-3 py-2 font-medium">shopName</th>
+            <th className="px-3 py-2 font-medium">categoryName</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-zinc-200">
+          {state.mappedProducts.length > 0 ? (
+            state.mappedProducts.map((product) => (
+              <tr key={product.outerItemId}>
+                <td className="px-3 py-2 font-medium text-zinc-950">
+                  {product.title}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {product.shortTitle}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {product.outerItemId}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">{product.price}</td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {product.finalPrice}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {product.couponAmount}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {product.commissionRate}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {product.shopName}
+                </td>
+                <td className="px-3 py-2 text-zinc-600">
+                  {product.categoryName}
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td className="px-3 py-6 text-center text-zinc-500" colSpan={9}>
+                暂无映射后的商品。
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -91,10 +166,13 @@ export function DataokeSearchTestForm() {
   return (
     <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-zinc-950">大淘客搜索测试</h2>
+      <p className="mt-2 text-sm text-zinc-600">
+        本轮真实联调只优先支持搜索接口，pageSize 会被服务端限制为最大 10。
+      </p>
       <form action={formAction} className="mt-4 grid gap-4 md:grid-cols-3">
         <TextInput label="keyWords" name="keyWords" placeholder="办公" />
         <TextInput label="pageId" name="pageId" placeholder="1" />
-        <TextInput label="pageSize" name="pageSize" placeholder="20" />
+        <TextInput label="pageSize" name="pageSize" placeholder="10" />
         <TextInput label="cids" name="cids" placeholder="8" />
         <TextInput label="sort" name="sort" placeholder="total_sales_des" />
         <TextInput label="hasCoupon" name="hasCoupon" placeholder="1" />
@@ -102,7 +180,17 @@ export function DataokeSearchTestForm() {
           <SubmitButton label="测试搜索" />
         </div>
       </form>
-      <ResultPanel state={state} />
+      <StatusPanel state={state} />
+      <DiagnosticPanel
+        label="safeRequestSummary"
+        value={state.safeRequestSummary}
+      />
+      <DiagnosticPanel
+        label="safeErrorSummary"
+        value={state.safeErrorSummary}
+      />
+      <RawSummaryPanel state={state} />
+      <MappedProductsPanel state={state} />
     </section>
   );
 }
@@ -116,11 +204,14 @@ export function DataokeSuperCategoryTestForm() {
   return (
     <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-zinc-950">超级分类测试</h2>
-      <p className="mt-2 text-sm text-zinc-600">无业务参数，只测试分类接口。</p>
+      <p className="mt-2 text-sm text-zinc-600">
+        本轮暂不真实联调超级分类，搜索接口稳定后再开启。
+      </p>
       <form action={formAction}>
-        <SubmitButton label="测试超级分类" />
+        <SubmitButton label="查看当前状态" />
       </form>
-      <ResultPanel state={state} />
+      <StatusPanel state={state} />
+      <RawSummaryPanel state={state} />
     </section>
   );
 }
@@ -134,15 +225,19 @@ export function DataokePrivilegeLinkTestForm() {
   return (
     <section className="rounded-lg border border-zinc-200 bg-white p-5 shadow-sm">
       <h2 className="text-xl font-semibold text-zinc-950">高效转链测试</h2>
+      <p className="mt-2 text-sm text-zinc-600">
+        本轮暂不真实联调高效转链，避免在搜索字段未稳定前扩大外部接口范围。
+      </p>
       <form action={formAction} className="mt-4 grid gap-4 md:grid-cols-3">
         <TextInput label="goodsId" name="goodsId" />
         <TextInput label="couponId" name="couponId" />
         <TextInput label="pid" name="pid" />
         <div className="md:col-span-3">
-          <SubmitButton label="测试转链" />
+          <SubmitButton label="查看当前状态" />
         </div>
       </form>
-      <ResultPanel state={state} />
+      <StatusPanel state={state} />
+      <RawSummaryPanel state={state} />
     </section>
   );
 }

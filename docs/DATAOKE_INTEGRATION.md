@@ -151,6 +151,16 @@ Dataoke 原始字段不能直接进入页面。接口返回必须先经过 mappe
 7. 根据真实响应结构校准 `DataokeRawProduct` 和 mapper 字段。
 8. 稳定后再考虑写入数据库和后台同步任务。
 
+当前第一轮真实联调只测试大淘客搜索接口：
+
+- 搜索接口路径：`/api/goods/get-dtk-search-goods`
+- 搜索接口版本：`v2.1.2`
+- `pageSize` 在服务端限制为最大 `10`
+- 页面只展示 `rawSummary`，不返回完整签名 URL
+- 页面不展示 `appSecret`、`signRan`、签名原文
+- 搜索成功并确认字段映射后，再考虑超级分类
+- 超级分类成功后，再考虑高效转链
+
 ## 后台测试页
 
 后台测试页路径：`/admin/api-test/dataoke`。
@@ -165,6 +175,7 @@ Dataoke 原始字段不能直接进入页面。接口返回必须先经过 mappe
 - `appSecret` 只在服务端签名逻辑中使用，不返回给页面。
 - 不要在浏览器端暴露 `appSecret`。
 - 前台页面不能直接调用 Dataoke API。
+- 不要把完整签名 URL、`signRan` 或 `appKey` 当作测试结果展示到页面。
 
 ## 启用真实接口前检查清单
 
@@ -182,6 +193,28 @@ Dataoke 原始字段不能直接进入页面。接口返回必须先经过 mappe
 10. 前台页面不能直接调用 Dataoke API，也不能接触 `appSecret`。
 
 真实联调完成后，再评估是否接入超级分类和高效转链；不要在第一次联调时直接进入同步任务或数据库写入。
+
+## HTTP 479 排查记录
+
+后台 Dataoke 搜索测试页曾遇到 `Dataoke API HTTP request failed with status 479.`。479 更像是网关或接口层拒绝请求，不能继续盲目扩大真实请求范围。
+
+当前 Client 已增加安全诊断信息：
+
+- 请求头增加 `Accept: application/json` 和 `User-Agent: taoke-site-dataoke-client/1.0`。
+- HTTP 非 2xx 时读取响应文本，但页面只展示 `responseTextPreview` 前 300 个字符。
+- 页面只展示 `safeRequestSummary` 和 `safeErrorSummary`，不展示完整 URL、完整 query、完整 `signRan`、`appKey`、`appSecret` 或 `.env` 内容。
+- `safeRequestSummary` 只包含 endpoint、version、业务参数 key、部分业务参数预览、是否存在 appKey/appSecret/signRan、nonce/timer/signRan 长度，以及 `signRan` 前 6 位。
+
+下一次真实联调优先检查：
+
+1. `signRan` 规则是否仍为 `appKey=xxx&timer=xxx&nonce=xxx&key=xxx` 后 MD5 大写。
+2. 搜索接口参数大小写是否完全使用 `pageId`、`pageSize`、`keyWords`、`cids`、`sort`、`hasCoupon`。
+3. 搜索接口 version 是否为 `v2.1.2`，或当前账号文档是否要求其他版本。
+4. `appKey`、`appSecret`、`pid` 是否有效，且只放在本地 `.env`。
+5. 当前账号是否仍要求 SDK 旧签名或额外公共参数。
+6. 是否被网关或请求头策略拦截，可结合 `contentType` 和 `responseTextPreview` 判断。
+
+真实联调仍然先只测搜索接口，`pageSize` 保持最大 10。搜索稳定后，再考虑超级分类；超级分类稳定后，再考虑高效转链。
 
 ## 当前缺口
 
