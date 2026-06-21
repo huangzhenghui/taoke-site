@@ -13,6 +13,8 @@ import type {
   DataokeRawProduct,
   DataokeSearchResponse,
 } from "./dataoke.types";
+import { dataokeConfig } from "./dataoke.config";
+import { dataokeEndpoints } from "./dataoke.endpoints";
 
 export class DataokeApiAdapter implements ProductSourceAdapter {
   sourceName = "dataoke";
@@ -21,7 +23,8 @@ export class DataokeApiAdapter implements ProductSourceAdapter {
     params: SearchProductsParams,
   ): Promise<ProductSearchResult> {
     const response = await dataokeClient.request<DataokeSearchResponse>(
-      "/goods/search",
+      dataokeEndpoints.searchGoods.path,
+      dataokeConfig.searchVersion,
       {
         keyword: params.keyword,
         pageId: params.page,
@@ -41,7 +44,8 @@ export class DataokeApiAdapter implements ProductSourceAdapter {
 
   async getProductDetail({ outerItemId }: GetProductDetailParams) {
     const response = await dataokeClient.request<DataokeRawProduct>(
-      "/goods/detail",
+      dataokeEndpoints.goodsList.path,
+      dataokeConfig.goodsListVersion,
       {
         goodsId: outerItemId,
       },
@@ -56,10 +60,11 @@ export class DataokeApiAdapter implements ProductSourceAdapter {
     promotionPositionId,
   }: ConvertLinkParams): Promise<ConvertLinkResult> {
     const response = await dataokeClient.request<DataokePrivilegeLinkResponse>(
-      "/tb-service/get-privilege-link",
+      dataokeEndpoints.privilegeLink.path,
+      dataokeConfig.privilegeLinkVersion,
       {
         goodsId: outerItemId,
-        pid: promotionPositionId,
+        pid: promotionPositionId ?? dataokeConfig.pid,
         url: originalUrl,
       },
     );
