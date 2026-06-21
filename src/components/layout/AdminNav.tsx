@@ -11,6 +11,7 @@ const adminLinks = [
   { href: "/admin/promotion-links", label: "推广链接" },
   { href: "/admin/api-test/dataoke", label: "Dataoke 测试" },
   { href: "/admin/dataoke-sync", label: "Dataoke 同步预览" },
+  { href: "/admin/dataoke-link-batch", label: "Dataoke 批量转链" },
   { href: "/", label: "返回前台首页" },
 ];
 

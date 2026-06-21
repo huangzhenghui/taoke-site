@@ -48,6 +48,21 @@ and the corresponding Dataoke response fields. Missing promotion links are
 reported from the local `PromotionLink` relation; a future batch link-conversion
 task can repair them without changing the product import flow.
 
+`/admin/dataoke-link-batch` adds a manual Dataoke promotion-link batch flow.
+It selects active, imported Dataoke products with a non-empty external item ID,
+processes no more than 10 at a time, and is allowed to call the real API only
+when `DATAOKE_ENABLE_REAL_API=true`. `PromotionLink` is upserted independently
+by `productId + source`, and a safe `SyncLog` records the batch result. Public
+pages still do not read database products or call Dataoke directly; switching
+the storefront to database-backed products remains a later task.
+
+If a batch link run reports skipped products, `/admin/dataoke-link-batch` now
+shows each `skippedItems.reason` alongside the product title and external item
+ID. When `DATAOKE_ENABLE_REAL_API=false`, the batch stops before querying
+products and returns zero skipped items. `goodsId` is always the stored
+`Product.outerItemId`; `couponId` is optional and an empty coupon ID is never a
+reason to skip a product.
+
 当前 `src/integrations/dataoke` 是大淘客 API 接入骨架，只用于为后续联调预留结构。
 项目页面仍然读取 mock service，不会直接调用大淘客真实接口。
 

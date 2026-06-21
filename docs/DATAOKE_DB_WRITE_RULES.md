@@ -40,6 +40,18 @@ An existing Product with `manualCategoryLocked=true` retains its current
 mapping. The Dataoke preview applies the same resolution, so the proposed
 category is visible before confirmation.
 
+### Manual batch promotion-link generation
+
+`/admin/dataoke-link-batch` manually generates `PromotionLink` records for at
+most 10 active Dataoke Products at a time. It does not run automatically. When
+`onlyMissing=true`, it selects only Products with no existing PromotionLink.
+The real request is blocked unless `DATAOKE_ENABLE_REAL_API=true`.
+
+The generated link is upserted by `productId + source`. Each batch creates a
+safe `SyncLog` with task type `batch_promotion_links`, limit/only-missing
+parameters, timestamps, counts, final status, and a safe message. It never
+stores or returns `appSecret`, `signRan`, `pid`, or a signed request URL.
+
 本文档用于说明 Dataoke 商品入库规则。当前已实现后台手动确认入库；本次不新增 migration，也不修改 `prisma/schema.prisma`。
 
 ## Prisma Schema 检查
