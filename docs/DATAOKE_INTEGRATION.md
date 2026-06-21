@@ -144,10 +144,27 @@ Dataoke 原始字段不能直接进入页面。接口返回必须先经过 mappe
 
 1. 在本地 `.env` 填入测试用 `DATAOKE_APP_KEY`、`DATAOKE_APP_SECRET`、`DATAOKE_PID`。
 2. 保持前台页面不直接调用 Dataoke。
-3. 用后台测试页或脚本在服务端调用 adapter。
-4. 根据真实响应结构校准 `DataokeRawProduct` 和 mapper 字段。
-5. 打开 `DATAOKE_ENABLE_REAL_API="true"` 后，再接入真实 fetch。
-6. 稳定后再考虑写入数据库和后台同步任务。
+3. 进入后台测试页 `/admin/api-test/dataoke`。
+4. 当前测试页默认不真实请求接口，`DATAOKE_ENABLE_REAL_API=false` 时只展示未启用提示。
+5. 真实联调前设置 `DATAOKE_ENABLE_REAL_API="true"`。
+6. 真实联调时先测试搜索，再测试分类，最后测试转链。
+7. 根据真实响应结构校准 `DataokeRawProduct` 和 mapper 字段。
+8. 稳定后再考虑写入数据库和后台同步任务。
+
+## 后台测试页
+
+后台测试页路径：`/admin/api-test/dataoke`。
+
+该页面只用于测试大淘客接口签名、请求参数、字段映射和返回结果，不影响前台页面。
+页面上的交互表单会调用 Server Actions，Server Actions 再调用 `DataokeClient`。
+
+安全边界：
+
+- 默认不真实请求大淘客接口。
+- `DATAOKE_ENABLE_REAL_API=false` 时，页面显示真实接口未启用提示。
+- `appSecret` 只在服务端签名逻辑中使用，不返回给页面。
+- 不要在浏览器端暴露 `appSecret`。
+- 前台页面不能直接调用 Dataoke API。
 
 ## 当前缺口
 
