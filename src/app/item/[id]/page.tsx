@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import {
-  getAllProducts,
+  getProductDetailFromDb,
   getProductById,
   type Product,
   type ProductStatus,
@@ -15,6 +15,8 @@ const currencyFormatter = new Intl.NumberFormat("zh-CN", {
   minimumFractionDigits: 0,
   style: "currency",
 });
+
+export const dynamic = "force-dynamic";
 
 const platformLabels: Record<Product["platform"], string> = {
   jd: "京东",
@@ -45,17 +47,15 @@ type ProductPageProps = {
   }>;
 };
 
-export async function generateStaticParams() {
-  return getAllProducts().map((product) => ({
-    id: product.id,
-  }));
+async function getProductForDetail(id: string) {
+  return (await getProductDetailFromDb(id)) ?? getProductById(id);
 }
 
 export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { id } = await params;
-  const product = getProductById(id);
+  const product = await getProductForDetail(id);
 
   if (!product) {
     return {
@@ -71,7 +71,7 @@ export async function generateMetadata({
 
 export default async function ProductDetailPage({ params }: ProductPageProps) {
   const { id } = await params;
-  const product = getProductById(id);
+  const product = await getProductForDetail(id);
 
   if (!product) {
     notFound();

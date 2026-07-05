@@ -10,6 +10,7 @@ export {
 export { getAdminProductsFromDb } from "./product-db.service";
 export {
   getHomeProductsFromDb,
+  getProductDetailFromDb,
   mapDbProductToProductCardItem,
 } from "./product-public-db.service";
 export type { AdminProductsDbQuery } from "./product-db.service";

@@ -79,6 +79,29 @@ When no usable local or mock link exists, it shows a friendly unavailable-link
 page. Suggested next steps are making the product detail or category page read
 database Products.
 
+`/item/[id]` now reads a publicly visible local database Product before the
+legacy mock fallback. Its title and description metadata follow the same
+database-first order. The detail-page purchase and coupon buttons continue to
+use `/go/[productId]`, so promotion URLs remain hidden behind the local redirect
+route and the public page never requests the Dataoke API. A next step is making
+the category page read database Products.
+
+## Production Docker deployment notes
+
+Production Docker deployment files have been added for Tencent Cloud style
+server deployment. The runtime uses PostgreSQL inside Docker Compose, keeps the
+database port off the public internet, and serves the Next.js standalone app
+behind Nginx.
+
+- `DATAOKE_ENABLE_REAL_API` should default to `false` in production.
+- Real Dataoke requests should only be enabled for controlled backend sync or
+  link-generation operations managed by an administrator.
+- Public storefront pages still never request the Dataoke API directly.
+- `appSecret`, `signRan`, `pid`, and full signed request URLs must not be stored
+  in committed deployment files or displayed in logs/pages.
+- PostgreSQL is only reachable inside the Docker network and should not expose
+  port `5432` to the public internet.
+
 当前 `src/integrations/dataoke` 是大淘客 API 接入骨架，只用于为后续联调预留结构。
 项目页面仍然读取 mock service，不会直接调用大淘客真实接口。
 

@@ -113,3 +113,18 @@ export async function getHomeProductsFromDb({
 
   return products.map(mapDbProductToProductCardItem);
 }
+
+/** Reads one publicly visible Product from the local database for its detail page. */
+export async function getProductDetailFromDb(
+  id: string,
+): Promise<Product | null> {
+  const product = await prisma.product.findFirst({
+    where: {
+      id,
+      isManualHidden: false,
+      status: "active",
+    },
+  });
+
+  return product ? mapDbProductToProductCardItem(product) : null;
+}
