@@ -1,3 +1,7 @@
-spendsmart.cn www.spendsmart.cn {
+﻿spendsmart.cn www.spendsmart.cn {
+    basic_auth /admin* {
+        admin {$ADMIN_PASSWORD_HASH}
+    }
+
     reverse_proxy app:3000
 }
