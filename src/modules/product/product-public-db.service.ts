@@ -2,6 +2,8 @@ import type { Product as DbProduct } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
+import type { HotRankingWindow } from "@/modules/deal";
+
 import type {
   Product,
   ProductPlatform,
@@ -43,6 +45,17 @@ export type HomeProductsDbQuery = {
 export type RelatedProductsDbQuery = {
   categorySlug?: string;
   excludeProductId?: string;
+  limit?: number;
+};
+
+export type HotProductsDbQuery = {
+  categorySlug?: string;
+  limit?: number;
+  source?: string;
+  window?: HotRankingWindow;
+};
+
+export type BillionSubsidyProductsDbQuery = {
   limit?: number;
 };
 
@@ -188,6 +201,56 @@ export async function getEyeProtectionLampProductsFromDb({
         { title: { contains: keyword } },
         { shortTitle: { contains: keyword } },
       ]),
+    },
+  });
+
+  return products.map(mapDbProductToProductCardItem);
+}
+
+/** Reads active high-discount candidates for the local Billion Subsidy topic. */
+export async function getBillionSubsidyProductsFromDb({
+  limit,
+}: BillionSubsidyProductsDbQuery = {}): Promise<Product[]> {
+  const normalizedLimit = normalizeLimit(limit);
+  const products = await prisma.product.findMany({
+    orderBy: [
+      { couponAmount: "desc" },
+      { dailySales: "desc" },
+      { updatedAt: "desc" },
+    ],
+    take: normalizedLimit,
+    where: {
+      ...getDisplayableProductWhere(),
+      source: { in: ["dataoke", "alimama"] },
+    },
+  });
+
+  return products.map(mapDbProductToProductCardItem);
+}
+
+/** Reads active products for homepage hot-deal ranking blocks. */
+export async function getHotProductsFromDb({
+  categorySlug,
+  limit,
+  source,
+  window = "today",
+}: HotProductsDbQuery = {}): Promise<Product[]> {
+  const normalizedLimit = normalizeLimit(limit);
+  const normalizedSource = source?.trim();
+  const normalizedCategorySlug = categorySlug?.trim();
+  const orderBy =
+    window === "two_hours"
+      ? [{ twoHoursSales: "desc" as const }, { dailySales: "desc" as const }, { updatedAt: "desc" as const }]
+      : window === "week"
+        ? [{ monthSales: "desc" as const }, { dailySales: "desc" as const }, { updatedAt: "desc" as const }]
+        : [{ dailySales: "desc" as const }, { twoHoursSales: "desc" as const }, { updatedAt: "desc" as const }];
+  const products = await prisma.product.findMany({
+    orderBy,
+    take: normalizedLimit,
+    where: {
+      ...getDisplayableProductWhere(),
+      ...(normalizedSource ? { source: normalizedSource } : {}),
+      ...(normalizedCategorySlug ? { categorySlug: normalizedCategorySlug } : {}),
     },
   });
 

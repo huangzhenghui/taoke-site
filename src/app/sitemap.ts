@@ -16,6 +16,11 @@ const eyeProtectionDeskLampTopic = {
   updatedAt: "2026-07-05T00:00:00.000+08:00",
 };
 
+const billionSubsidyTopic = {
+  slug: "billion-subsidy",
+  updatedAt: "2026-07-06T00:00:00.000+08:00",
+};
+
 async function getDbProductEntriesSafely() {
   try {
     return await getPublicProductSitemapEntriesFromDb();
@@ -71,6 +76,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(eyeProtectionDeskLampTopic.updatedAt),
       priority: 0.85,
       url: getSiteUrl(`/topic/${eyeProtectionDeskLampTopic.slug}`),
+    },
+    {
+      changeFrequency: "daily",
+      lastModified: new Date(billionSubsidyTopic.updatedAt),
+      priority: 0.86,
+      url: getSiteUrl(`/topic/${billionSubsidyTopic.slug}`),
     },
     ...activeCategories.map((category) => ({
       changeFrequency: "daily" as const,

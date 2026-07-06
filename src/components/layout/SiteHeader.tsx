@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { siteConfig } from "@/lib/site";
 import { getActiveCategories } from "@/modules/category";
@@ -11,36 +14,21 @@ const categoryLinks = getActiveCategories()
   }));
 
 export function SiteHeader() {
+  const pathname = usePathname();
+
+  if (pathname === "/") {
+    return null;
+  }
+
   return (
     <header className="border-b border-zinc-200 bg-white">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-5 py-4 sm:px-8 lg:px-12">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-5 py-4 sm:px-8 lg:px-12">
         <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
           <Link className="text-xl font-semibold text-zinc-950" href="/">
             {siteConfig.siteName}
           </Link>
-          <p className="text-sm text-zinc-500">
-            {siteConfig.siteDescription}
-          </p>
+          <p className="text-sm text-zinc-500">{siteConfig.siteDescription}</p>
         </div>
-
-        <form
-          action="/search"
-          className="flex w-full max-w-xl gap-2"
-          method="GET"
-        >
-          <input
-            className="min-w-0 flex-1 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition-colors placeholder:text-zinc-400 focus:border-zinc-400"
-            name="q"
-            placeholder="搜索商品、文章或专题"
-            type="search"
-          />
-          <button
-            className="rounded-md bg-zinc-950 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
-            type="submit"
-          >
-            搜索
-          </button>
-        </form>
 
         <nav
           aria-label="站点导航"

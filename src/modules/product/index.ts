@@ -9,7 +9,9 @@ export {
 } from "./product.service";
 export { getAdminProductsFromDb } from "./product-db.service";
 export {
+  getBillionSubsidyProductsFromDb,
   getEyeProtectionLampProductsFromDb,
+  getHotProductsFromDb,
   getHomeProductsFromDb,
   getPublicProductSitemapEntriesFromDb,
   getProductDetailFromDb,
@@ -18,6 +20,8 @@ export {
 } from "./product-public-db.service";
 export type { AdminProductsDbQuery } from "./product-db.service";
 export type {
+  BillionSubsidyProductsDbQuery,
+  HotProductsDbQuery,
   HomeProductsDbQuery,
   RelatedProductsDbQuery,
 } from "./product-public-db.service";
