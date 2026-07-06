@@ -14,6 +14,7 @@ export type Product = {
   platform: ProductPlatform;
   source: ProductSource;
   outerItemId: string;
+  brandName?: string;
   title: string;
   shortTitle: string;
   description: string;
@@ -22,6 +23,9 @@ export type Product = {
   finalPrice: number;
   couponAmount: number;
   commissionRate: number;
+  monthSales?: number;
+  dailySales?: number;
+  twoHoursSales?: number;
   shopName: string;
   categoryId: string;
   categorySlug: string;

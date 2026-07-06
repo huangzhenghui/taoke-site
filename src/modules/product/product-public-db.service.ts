@@ -2,10 +2,16 @@ import type { Product as DbProduct } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 
-import type { Product, ProductPlatform, ProductSource, ProductStatus } from "./product.types";
+import type {
+  Product,
+  ProductPlatform,
+  ProductSource,
+  ProductStatus,
+} from "./product.types";
 
 const DEFAULT_LIMIT = 12;
 const MAX_LIMIT = 24;
+const eyeProtectionLampKeywords = ["护眼", "台灯", "学习灯", "LED台灯", "国AA"];
 
 const productPlatforms = new Set<ProductPlatform>([
   "taobao",
@@ -34,6 +40,12 @@ export type HomeProductsDbQuery = {
   source?: string;
 };
 
+export type RelatedProductsDbQuery = {
+  categorySlug?: string;
+  excludeProductId?: string;
+  limit?: number;
+};
+
 function normalizeLimit(limit: number | undefined) {
   if (!Number.isFinite(limit)) {
     return DEFAULT_LIMIT;
@@ -60,9 +72,21 @@ function toProductStatus(value: string): ProductStatus {
     : "active";
 }
 
+function getDisplayableProductWhere() {
+  return {
+    finalPrice: { not: null },
+    isManualHidden: false,
+    mainImage: { not: "" },
+    outerItemId: { not: "" },
+    status: "active",
+    title: { not: "" },
+  } as const;
+}
+
 /** Maps a persisted Product into the existing ProductCard-compatible shape. */
 export function mapDbProductToProductCardItem(product: DbProduct): Product {
   return {
+    brandName: product.brandName ?? undefined,
     categoryId: product.categoryId ?? "uncategorized",
     categoryName: product.categoryName ?? "未分类",
     categorySlug: product.categorySlug ?? "uncategorized",
@@ -70,10 +94,12 @@ export function mapDbProductToProductCardItem(product: DbProduct): Product {
     couponAmount: Number(product.couponAmount ?? 0),
     couponUrl: product.couponUrl ?? "",
     createdAt: product.createdAt.toISOString(),
+    dailySales: product.dailySales ?? undefined,
     description: product.description ?? "",
     finalPrice: Number(product.finalPrice ?? 0),
     id: product.id,
     mainImage: product.mainImage ?? "",
+    monthSales: product.monthSales ?? undefined,
     outerItemId: product.outerItemId,
     platform: toProductPlatform(product.platform),
     price: Number(product.price ?? 0),
@@ -83,6 +109,7 @@ export function mapDbProductToProductCardItem(product: DbProduct): Product {
     source: toProductSource(product.source),
     status: toProductStatus(product.status),
     title: product.title,
+    twoHoursSales: product.twoHoursSales ?? undefined,
     updatedAt: product.updatedAt.toISOString(),
   };
 }
@@ -100,12 +127,7 @@ export async function getHomeProductsFromDb({
     orderBy: { updatedAt: "desc" },
     take: normalizedLimit,
     where: {
-      finalPrice: { not: null },
-      isManualHidden: false,
-      mainImage: { not: "" },
-      outerItemId: { not: "" },
-      status: "active",
-      title: { not: "" },
+      ...getDisplayableProductWhere(),
       ...(normalizedSource ? { source: normalizedSource } : {}),
       ...(normalizedCategorySlug ? { categorySlug: normalizedCategorySlug } : {}),
     },
@@ -127,4 +149,65 @@ export async function getProductDetailFromDb(
   });
 
   return product ? mapDbProductToProductCardItem(product) : null;
+}
+
+/** Reads related active products for public product detail recommendations. */
+export async function getRelatedProductsFromDb({
+  categorySlug,
+  excludeProductId,
+  limit,
+}: RelatedProductsDbQuery = {}): Promise<Product[]> {
+  const normalizedLimit = normalizeLimit(limit);
+  const products = await prisma.product.findMany({
+    orderBy: { updatedAt: "desc" },
+    take: normalizedLimit,
+    where: {
+      ...getDisplayableProductWhere(),
+      ...(excludeProductId ? { id: { not: excludeProductId } } : {}),
+      ...(categorySlug ? { categorySlug } : {}),
+    },
+  });
+
+  return products.map(mapDbProductToProductCardItem);
+}
+
+/** Reads Dataoke eye-protection desk lamp candidates for the first SEO/GEO topic. */
+export async function getEyeProtectionLampProductsFromDb({
+  limit,
+}: {
+  limit?: number;
+} = {}): Promise<Product[]> {
+  const normalizedLimit = normalizeLimit(limit);
+  const products = await prisma.product.findMany({
+    orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
+    take: normalizedLimit,
+    where: {
+      ...getDisplayableProductWhere(),
+      source: "dataoke",
+      OR: eyeProtectionLampKeywords.flatMap((keyword) => [
+        { title: { contains: keyword } },
+        { shortTitle: { contains: keyword } },
+      ]),
+    },
+  });
+
+  return products.map(mapDbProductToProductCardItem);
+}
+
+/** Reads public Product sitemap entries from the local database. */
+export async function getPublicProductSitemapEntriesFromDb() {
+  const products = await prisma.product.findMany({
+    orderBy: { updatedAt: "desc" },
+    select: { id: true, updatedAt: true },
+    where: {
+      isManualHidden: false,
+      status: "active",
+      title: { not: "" },
+    },
+  });
+
+  return products.map((product) => ({
+    id: product.id,
+    updatedAt: product.updatedAt.toISOString(),
+  }));
 }

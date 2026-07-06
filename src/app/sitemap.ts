@@ -1,17 +1,45 @@
 import type { MetadataRoute } from "next";
 
 import { getSiteUrl } from "@/lib/site";
-import { getAllArticles } from "@/modules/article";
+import { getPublishedArticles } from "@/modules/article";
 import { getActiveCategories } from "@/modules/category";
-import { getAllProducts } from "@/modules/product";
-import { getAllSeoPages } from "@/modules/seo-page";
+import {
+  getActiveProducts,
+  getPublicProductSitemapEntriesFromDb,
+} from "@/modules/product";
+import { getPublishedSeoPages } from "@/modules/seo-page";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const dynamic = "force-dynamic";
+
+const eyeProtectionDeskLampTopic = {
+  slug: "eye-protection-desk-lamp",
+  updatedAt: "2026-07-05T00:00:00.000+08:00",
+};
+
+async function getDbProductEntriesSafely() {
+  try {
+    return await getPublicProductSitemapEntriesFromDb();
+  } catch {
+    return [];
+  }
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const articles = getAllArticles();
-  const products = getAllProducts();
+  const articles = getPublishedArticles();
+  const mockProducts = getActiveProducts();
+  const dbProducts = await getDbProductEntriesSafely();
   const activeCategories = getActiveCategories();
-  const seoPages = getAllSeoPages();
+  const seoPages = getPublishedSeoPages();
+  const productEntries = new Map<string, Date>();
+
+  for (const product of mockProducts) {
+    productEntries.set(product.id, new Date(product.updatedAt));
+  }
+
+  for (const product of dbProducts) {
+    productEntries.set(product.id, new Date(product.updatedAt));
+  }
 
   return [
     {
@@ -20,11 +48,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 1,
       url: getSiteUrl("/"),
     },
-    ...products.map((product) => ({
+    ...Array.from(productEntries.entries()).map(([id, updatedAt]) => ({
       changeFrequency: "weekly" as const,
-      lastModified: new Date(product.updatedAt),
+      lastModified: updatedAt,
       priority: 0.8,
-      url: getSiteUrl(`/item/${product.id}`),
+      url: getSiteUrl(`/item/${id}`),
     })),
     ...articles.map((article) => ({
       changeFrequency: "weekly" as const,
@@ -38,6 +66,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
       url: getSiteUrl(`/topic/${seoPage.slug}`),
     })),
+    {
+      changeFrequency: "weekly",
+      lastModified: new Date(eyeProtectionDeskLampTopic.updatedAt),
+      priority: 0.85,
+      url: getSiteUrl(`/topic/${eyeProtectionDeskLampTopic.slug}`),
+    },
     ...activeCategories.map((category) => ({
       changeFrequency: "daily" as const,
       lastModified: new Date(category.updatedAt),
